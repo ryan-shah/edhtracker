@@ -21,16 +21,152 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'EDH Life Tracker',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple, brightness: Brightness.dark),
+        colorScheme: ColorScheme.fromSeed(
+            seedColor: Colors.deepPurple, brightness: Brightness.dark),
         useMaterial3: true,
       ),
-      home: const LifeTrackerPage(),
+      home: const GameSetupPage(),
+    );
+  }
+}
+
+class GameSetupPage extends StatefulWidget {
+  const GameSetupPage({super.key});
+
+  @override
+  State<GameSetupPage> createState() => _GameSetupPageState();
+}
+
+class _GameSetupPageState extends State<GameSetupPage> {
+  final _playerNames =
+      List.generate(4, (i) => TextEditingController(text: 'Player ${i + 1}'));
+  final _startingLife = TextEditingController(text: '40');
+  int _startingPlayerIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    for (var controller in _playerNames) {
+      controller.addListener(() => setState(() {}));
+    }
+  }
+
+  @override
+  void dispose() {
+    for (var controller in _playerNames) {
+      controller.dispose();
+    }
+    _startingLife.dispose();
+    super.dispose();
+  }
+
+  void _startGame() {
+    final playerNames = _playerNames
+        .map((c) => c.text.isNotEmpty
+            ? c.text
+            : 'Player ${_playerNames.indexOf(c) + 1}')
+        .toList();
+    final startingLife = int.tryParse(_startingLife.text) ?? 40;
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LifeTrackerPage(
+          playerNames: playerNames,
+          startingLife: startingLife,
+          startingPlayerIndex: _startingPlayerIndex,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Game Setup'),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 500),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ...List.generate(4, (i) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: TextField(
+                      controller: _playerNames[i],
+                      decoration: InputDecoration(
+                        labelText: 'Commander Name ${i + 1}',
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                  );
+                }),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _startingLife,
+                  decoration: const InputDecoration(
+                    labelText: 'Starting Life Total',
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<int>(
+                  value: _startingPlayerIndex,
+                  decoration: const InputDecoration(
+                    labelText: 'Starting Player',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: List.generate(4, (i) {
+                    return DropdownMenuItem(
+                      value: i,
+                      child: Text(_playerNames[i].text.isNotEmpty
+                          ? _playerNames[i].text
+                          : 'Player ${i + 1}'),
+                    );
+                  }),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _startingPlayerIndex = value;
+                      });
+                    }
+                  },
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton(
+                  onPressed: _startGame,
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text('Start Game'),
+                )
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
 
 class LifeTrackerPage extends StatefulWidget {
-  const LifeTrackerPage({super.key});
+  final List<String> playerNames;
+  final int startingLife;
+  final int startingPlayerIndex;
+
+  const LifeTrackerPage({
+    super.key,
+    required this.playerNames,
+    required this.startingLife,
+    required this.startingPlayerIndex,
+  });
 
   @override
   State<LifeTrackerPage> createState() => _LifeTrackerPageState();
@@ -39,29 +175,38 @@ class LifeTrackerPage extends StatefulWidget {
 class _LifeTrackerPageState extends State<LifeTrackerPage> {
   final List<GlobalKey<_PlayerCardState>> _playerCardKeys =
       List.generate(4, (_) => GlobalKey<_PlayerCardState>());
-  int _currentPlayerIndex = 0;
+  late int _currentPlayerIndex;
   int _turnCount = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentPlayerIndex = widget.startingPlayerIndex;
+  }
 
   void _showResetDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Reset Game?'),
+          title: const Text('New Game?'),
           content: const Text(
-              'Are you sure you want to reset all life totals, counters, and turns?'),
+              'This will end the current game and return to the setup screen.'),
           actions: <Widget>[
             TextButton(
-              child: const Text('No'),
+              child: const Text('Cancel'),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Yes'),
+              child: const Text('New Game'),
               onPressed: () {
-                _resetGame();
-                Navigator.of(context).pop();
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                      builder: (context) => const GameSetupPage()),
+                  (route) => false,
+                );
               },
             ),
           ],
@@ -70,20 +215,10 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
     );
   }
 
-  void _resetGame() {
-    for (var key in _playerCardKeys) {
-      key.currentState?.reset();
-    }
-    setState(() {
-      _currentPlayerIndex = 0;
-      _turnCount = 1;
-    });
-  }
-
   void _nextTurn() {
     setState(() {
       _currentPlayerIndex = (_currentPlayerIndex + 1) % 4;
-      if (_currentPlayerIndex == 0) {
+      if (_currentPlayerIndex == widget.startingPlayerIndex) {
         _turnCount++;
       }
     });
@@ -105,6 +240,8 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                         child: PlayerCard(
                           key: _playerCardKeys[0],
                           playerIndex: 0,
+                          playerName: widget.playerNames[0],
+                          startingLife: widget.startingLife,
                           isCurrentTurn: _currentPlayerIndex == 0,
                           onTurnEnd: _nextTurn,
                           turnCount: _turnCount,
@@ -117,6 +254,8 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                         child: PlayerCard(
                           key: _playerCardKeys[1],
                           playerIndex: 1,
+                          playerName: widget.playerNames[1],
+                          startingLife: widget.startingLife,
                           isCurrentTurn: _currentPlayerIndex == 1,
                           onTurnEnd: _nextTurn,
                           turnCount: _turnCount,
@@ -133,6 +272,8 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                       child: PlayerCard(
                         key: _playerCardKeys[3],
                         playerIndex: 3,
+                        playerName: widget.playerNames[3],
+                        startingLife: widget.startingLife,
                         isCurrentTurn: _currentPlayerIndex == 3,
                         onTurnEnd: _nextTurn,
                         turnCount: _turnCount,
@@ -142,6 +283,8 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                       child: PlayerCard(
                         key: _playerCardKeys[2],
                         playerIndex: 2,
+                        playerName: widget.playerNames[2],
+                        startingLife: widget.startingLife,
                         isCurrentTurn: _currentPlayerIndex == 2,
                         onTurnEnd: _nextTurn,
                         turnCount: _turnCount,
@@ -166,6 +309,8 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
 
 class PlayerCard extends StatefulWidget {
   final int playerIndex;
+  final String playerName;
+  final int startingLife;
   final bool isCurrentTurn;
   final VoidCallback onTurnEnd;
   final int turnCount;
@@ -173,6 +318,8 @@ class PlayerCard extends StatefulWidget {
   const PlayerCard({
     super.key,
     required this.playerIndex,
+    required this.playerName,
+    required this.startingLife,
     required this.isCurrentTurn,
     required this.onTurnEnd,
     required this.turnCount,
@@ -183,15 +330,21 @@ class PlayerCard extends StatefulWidget {
 }
 
 class _PlayerCardState extends State<PlayerCard> {
-  int _life = 40;
+  late int _life;
   final Map<int, int> _commanderDamage = {};
   final Map<String, int> _playerCounters = {};
   bool _showCommanderDamage = false;
   bool _showPlayerCounters = false;
 
+  @override
+  void initState() {
+    super.initState();
+    _life = widget.startingLife;
+  }
+
   void reset() {
     setState(() {
-      _life = 40;
+      _life = widget.startingLife;
       _commanderDamage.clear();
       _playerCounters.clear();
       _showCommanderDamage = false;
@@ -250,8 +403,10 @@ class _PlayerCardState extends State<PlayerCard> {
 
   void _decrementPlayerCounter(String counter) {
     setState(() {
-      if (_playerCounters.containsKey(counter) && _playerCounters[counter]! > 0) {
-        _playerCounters.update(counter, (value) => value - 1, ifAbsent: () => 0);
+      if (_playerCounters.containsKey(counter) &&
+          _playerCounters[counter]! > 0) {
+        _playerCounters.update(counter, (value) => value - 1,
+            ifAbsent: () => 0);
       }
     });
   }
@@ -271,7 +426,8 @@ class _PlayerCardState extends State<PlayerCard> {
         margin: const EdgeInsets.all(4.0),
         shape: widget.isCurrentTurn
             ? RoundedRectangleBorder(
-                side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 3),
+                side: BorderSide(
+                    color: Theme.of(context).colorScheme.primary, width: 3),
                 borderRadius: const BorderRadius.all(Radius.circular(12)),
               )
             : null,
@@ -285,7 +441,7 @@ class _PlayerCardState extends State<PlayerCard> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Text(
-                    'Player ${widget.playerIndex + 1}',
+                    widget.playerName,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
@@ -353,14 +509,17 @@ class _PlayerCardState extends State<PlayerCard> {
                                         icon: const Icon(Icons.remove),
                                         iconSize: 20,
                                         onPressed: () =>
-                                            _decrementCommanderDamage(fromPlayerIndex),
+                                            _decrementCommanderDamage(
+                                                fromPlayerIndex),
                                       ),
-                                      Text('${_commanderDamage[fromPlayerIndex] ?? 0}'),
+                                      Text(
+                                          '${_commanderDamage[fromPlayerIndex] ?? 0}'),
                                       IconButton(
                                         icon: const Icon(Icons.add),
                                         iconSize: 20,
                                         onPressed: () =>
-                                            _incrementCommanderDamage(fromPlayerIndex),
+                                            _incrementCommanderDamage(
+                                                fromPlayerIndex),
                                       ),
                                     ],
                                   ),
@@ -372,11 +531,16 @@ class _PlayerCardState extends State<PlayerCard> {
                       ],
                     ),
                     Positioned(
-                      top: 0,
+                      bottom: 8,
+                      left: 0,
                       right: 0,
-                      child: IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: _toggleCommanderDamage,
+                      child: Center(
+                        child: FloatingActionButton(
+                          onPressed: _toggleCommanderDamage,
+                          backgroundColor: Colors.red,
+                          mini: true,
+                          child: const Icon(Icons.close),
+                        ),
                       ),
                     ),
                   ],
@@ -409,7 +573,8 @@ class _PlayerCardState extends State<PlayerCard> {
                                         onPressed: () =>
                                             _decrementPlayerCounter(counterName),
                                       ),
-                                      Text('${_playerCounters[counterName] ?? 0}'),
+                                      Text(
+                                          '${_playerCounters[counterName] ?? 0}'),
                                       IconButton(
                                         icon: const Icon(Icons.add),
                                         iconSize: 20,
@@ -426,11 +591,16 @@ class _PlayerCardState extends State<PlayerCard> {
                       ],
                     ),
                     Positioned(
-                      top: 0,
+                      bottom: 8,
+                      left: 0,
                       right: 0,
-                      child: IconButton(
-                        icon: const Icon(Icons.close),
-                        onPressed: _togglePlayerCounters,
+                      child: Center(
+                        child: FloatingActionButton(
+                          onPressed: _togglePlayerCounters,
+                          backgroundColor: Colors.red,
+                          mini: true,
+                          child: const Icon(Icons.close),
+                        ),
                       ),
                     ),
                   ],
@@ -439,10 +609,15 @@ class _PlayerCardState extends State<PlayerCard> {
             if (widget.isCurrentTurn)
               Positioned(
                 top: 8,
-                right: (widget.playerIndex == 0 || widget.playerIndex == 2) ? 8.0 : null,
-                left: (widget.playerIndex == 1 || widget.playerIndex == 3) ? 8.0 : null,
+                right: (widget.playerIndex == 0 || widget.playerIndex == 2)
+                    ? 8.0
+                    : null,
+                left: (widget.playerIndex == 1 || widget.playerIndex == 3)
+                    ? 8.0
+                    : null,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12.0, vertical: 6.0),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12.0),
