@@ -6,6 +6,8 @@ A simple and effective life tracker for four-player games of Magic: The Gatherin
 
 *   Tracks life totals for four players.
 *   Tracks commander damage from each player.
+*   Tracks player counters: Energy, Experience, Poison, and Rad.
+*   A central reset button to start a new game, with a confirmation dialog.
 *   Simple, clean interface.
 *   Locked in landscape mode for easy viewing.
 
