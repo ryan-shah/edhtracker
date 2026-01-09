@@ -10,6 +10,8 @@ A simple and effective life tracker for four-player games of Magic: The Gatherin
 *   A central reset button to start a new game, with a confirmation dialog.
 *   Simple, clean interface.
 *   Locked in landscape mode for easy viewing.
+*   Turn counter displayed on the current player's card.
+*   Customizable player layout.
 
 ## Getting Started
 

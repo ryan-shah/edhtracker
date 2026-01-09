@@ -39,6 +39,8 @@ class LifeTrackerPage extends StatefulWidget {
 class _LifeTrackerPageState extends State<LifeTrackerPage> {
   final List<GlobalKey<_PlayerCardState>> _playerCardKeys =
       List.generate(4, (_) => GlobalKey<_PlayerCardState>());
+  int _currentPlayerIndex = 0;
+  int _turnCount = 1;
 
   void _showResetDialog() {
     showDialog(
@@ -47,7 +49,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
         return AlertDialog(
           title: const Text('Reset Game?'),
           content: const Text(
-              'Are you sure you want to reset all life totals and counters?'),
+              'Are you sure you want to reset all life totals, counters, and turns?'),
           actions: <Widget>[
             TextButton(
               child: const Text('No'),
@@ -72,6 +74,19 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
     for (var key in _playerCardKeys) {
       key.currentState?.reset();
     }
+    setState(() {
+      _currentPlayerIndex = 0;
+      _turnCount = 1;
+    });
+  }
+
+  void _nextTurn() {
+    setState(() {
+      _currentPlayerIndex = (_currentPlayerIndex + 1) % 4;
+      if (_currentPlayerIndex == 0) {
+        _turnCount++;
+      }
+    });
   }
 
   @override
@@ -90,6 +105,9 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                         child: PlayerCard(
                           key: _playerCardKeys[0],
                           playerIndex: 0,
+                          isCurrentTurn: _currentPlayerIndex == 0,
+                          onTurnEnd: _nextTurn,
+                          turnCount: _turnCount,
                         ),
                       ),
                     ),
@@ -99,6 +117,9 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                         child: PlayerCard(
                           key: _playerCardKeys[1],
                           playerIndex: 1,
+                          isCurrentTurn: _currentPlayerIndex == 1,
+                          onTurnEnd: _nextTurn,
+                          turnCount: _turnCount,
                         ),
                       ),
                     ),
@@ -110,14 +131,20 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                   children: [
                     Expanded(
                       child: PlayerCard(
-                        key: _playerCardKeys[2],
-                        playerIndex: 2,
+                        key: _playerCardKeys[3],
+                        playerIndex: 3,
+                        isCurrentTurn: _currentPlayerIndex == 3,
+                        onTurnEnd: _nextTurn,
+                        turnCount: _turnCount,
                       ),
                     ),
                     Expanded(
                       child: PlayerCard(
-                        key: _playerCardKeys[3],
-                        playerIndex: 3,
+                        key: _playerCardKeys[2],
+                        playerIndex: 2,
+                        isCurrentTurn: _currentPlayerIndex == 2,
+                        onTurnEnd: _nextTurn,
+                        turnCount: _turnCount,
                       ),
                     ),
                   ],
@@ -139,8 +166,17 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
 
 class PlayerCard extends StatefulWidget {
   final int playerIndex;
+  final bool isCurrentTurn;
+  final VoidCallback onTurnEnd;
+  final int turnCount;
 
-  const PlayerCard({super.key, required this.playerIndex});
+  const PlayerCard({
+    super.key,
+    required this.playerIndex,
+    required this.isCurrentTurn,
+    required this.onTurnEnd,
+    required this.turnCount,
+  });
 
   @override
   State<PlayerCard> createState() => _PlayerCardState();
@@ -225,170 +261,203 @@ class _PlayerCardState extends State<PlayerCard> {
     final allPlayers = List.generate(4, (i) => i);
     const playerCounterTypes = ['Energy', 'Experience', 'Poison', 'Rad'];
 
-    return Card(
-      margin: const EdgeInsets.all(4.0),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Base layer: Life counter
-          Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Text(
-                  'Player ${widget.playerIndex + 1}',
-                  style: Theme.of(context).textTheme.titleLarge,
+    return GestureDetector(
+      onTap: () {
+        if (widget.isCurrentTurn) {
+          widget.onTurnEnd();
+        }
+      },
+      child: Card(
+        margin: const EdgeInsets.all(4.0),
+        shape: widget.isCurrentTurn
+            ? RoundedRectangleBorder(
+                side: BorderSide(color: Theme.of(context).colorScheme.primary, width: 3),
+                borderRadius: const BorderRadius.all(Radius.circular(12)),
+              )
+            : null,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Base layer: Life counter
+            Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Text(
+                    'Player ${widget.playerIndex + 1}',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                 ),
-              ),
-              Expanded(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.remove),
+                        onPressed: _decrementLife,
+                        iconSize: 28,
+                      ),
+                      Text(
+                        '$_life',
+                        style: Theme.of(context).textTheme.displayLarge,
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: _incrementLife,
+                        iconSize: 28,
+                      ),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: _toggleCommanderDamage,
+                        child: const Text('Commander Dmg'),
+                      ),
+                      ElevatedButton(
+                        onPressed: _togglePlayerCounters,
+                        child: const Text('Counters'),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            // Overlay: Commander Damage
+            if (_showCommanderDamage)
+              Container(
+                color: Theme.of(context).cardColor, // Opaque background
+                child: Stack(
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.remove),
-                      onPressed: _decrementLife,
-                      iconSize: 28,
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: GridView.count(
+                            crossAxisCount: 2,
+                            childAspectRatio: 2.5,
+                            children: allPlayers.map((fromPlayerIndex) {
+                              return Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text('From P${fromPlayerIndex + 1}:'),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.remove),
+                                        iconSize: 20,
+                                        onPressed: () =>
+                                            _decrementCommanderDamage(fromPlayerIndex),
+                                      ),
+                                      Text('${_commanderDamage[fromPlayerIndex] ?? 0}'),
+                                      IconButton(
+                                        icon: const Icon(Icons.add),
+                                        iconSize: 20,
+                                        onPressed: () =>
+                                            _incrementCommanderDamage(fromPlayerIndex),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
                     ),
-                    Text(
-                      '$_life',
-                      style: Theme.of(context).textTheme.displayLarge,
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.add),
-                      onPressed: _incrementLife,
-                      iconSize: 28,
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: _toggleCommanderDamage,
+                      ),
                     ),
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            // Overlay: Player Counters
+            if (_showPlayerCounters)
+              Container(
+                color: Theme.of(context).cardColor, // Opaque background
+                child: Stack(
                   children: [
-                    ElevatedButton(
-                      onPressed: _toggleCommanderDamage,
-                      child: const Text('Commander Dmg'),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: GridView.count(
+                            crossAxisCount: 2,
+                            childAspectRatio: 2.5,
+                            children: playerCounterTypes.map((counterName) {
+                              return Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(counterName),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.remove),
+                                        iconSize: 20,
+                                        onPressed: () =>
+                                            _decrementPlayerCounter(counterName),
+                                      ),
+                                      Text('${_playerCounters[counterName] ?? 0}'),
+                                      IconButton(
+                                        icon: const Icon(Icons.add),
+                                        iconSize: 20,
+                                        onPressed: () =>
+                                            _incrementPlayerCounter(counterName),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
                     ),
-                    ElevatedButton(
-                      onPressed: _togglePlayerCounters,
-                      child: const Text('Counters'),
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: _togglePlayerCounters,
+                      ),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
-          // Overlay: Commander Damage
-          if (_showCommanderDamage)
-            Container(
-              color: Theme.of(context).cardColor, // Opaque background
-              child: Stack(
-                children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: GridView.count(
-                          crossAxisCount: 2,
-                          childAspectRatio: 2.5,
-                          children: allPlayers.map((fromPlayerIndex) {
-                            return Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text('From P${fromPlayerIndex + 1}:'),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.remove),
-                                      iconSize: 20,
-                                      onPressed: () =>
-                                          _decrementCommanderDamage(fromPlayerIndex),
-                                    ),
-                                    Text('${_commanderDamage[fromPlayerIndex] ?? 0}'),
-                                    IconButton(
-                                      icon: const Icon(Icons.add),
-                                      iconSize: 20,
-                                      onPressed: () =>
-                                          _incrementCommanderDamage(fromPlayerIndex),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            );
-                          }).toList(),
+            if (widget.isCurrentTurn)
+              Positioned(
+                top: 8,
+                right: (widget.playerIndex == 0 || widget.playerIndex == 2) ? 8.0 : null,
+                left: (widget.playerIndex == 1 || widget.playerIndex == 3) ? 8.0 : null,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12.0),
+                  ),
+                  child: Text(
+                    'Turn ${widget.turnCount}',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Colors.deepPurple,
+                          fontWeight: FontWeight.bold,
                         ),
-                      ),
-                    ],
                   ),
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: _toggleCommanderDamage,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-          // Overlay: Player Counters
-          if (_showPlayerCounters)
-            Container(
-              color: Theme.of(context).cardColor, // Opaque background
-              child: Stack(
-                children: [
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: GridView.count(
-                          crossAxisCount: 2,
-                          childAspectRatio: 2.5,
-                          children: playerCounterTypes.map((counterName) {
-                            return Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(counterName),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.remove),
-                                      iconSize: 20,
-                                      onPressed: () =>
-                                          _decrementPlayerCounter(counterName),
-                                    ),
-                                    Text('${_playerCounters[counterName] ?? 0}'),
-                                    IconButton(
-                                      icon: const Icon(Icons.add),
-                                      iconSize: 20,
-                                      onPressed: () =>
-                                          _incrementPlayerCounter(counterName),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: IconButton(
-                      icon: const Icon(Icons.close),
-                      onPressed: _togglePlayerCounters,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
