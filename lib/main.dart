@@ -22,7 +22,9 @@ class MyApp extends StatelessWidget {
       title: 'EDH Life Tracker',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.deepPurple, brightness: Brightness.dark),
+          seedColor: Colors.deepPurple,
+          brightness: Brightness.dark,
+        ),
         useMaterial3: true,
       ),
       home: const GameSetupPage(),
@@ -38,9 +40,8 @@ class GameSetupPage extends StatefulWidget {
 }
 
 class _GameSetupPageState extends State<GameSetupPage> {
-  final _playerNames =
-      List.generate(4, (i) => TextEditingController(text: 'Player ${i + 1}'));
-  final _startingLife = TextEditingController(text: '40');
+  final _playerNames = List.generate(4, (i) => TextEditingController());
+  int _startingLife = 40;
   int _startingPlayerIndex = 0;
 
   @override
@@ -56,17 +57,18 @@ class _GameSetupPageState extends State<GameSetupPage> {
     for (var controller in _playerNames) {
       controller.dispose();
     }
-    _startingLife.dispose();
     super.dispose();
   }
 
   void _startGame() {
     final playerNames = _playerNames
-        .map((c) => c.text.isNotEmpty
-            ? c.text
-            : 'Player ${_playerNames.indexOf(c) + 1}')
+        .map(
+          (c) => c.text.isNotEmpty
+              ? c.text
+              : 'Player ${_playerNames.indexOf(c) + 1}',
+        )
         .toList();
-    final startingLife = int.tryParse(_startingLife.text) ?? 40;
+    final startingLife = _startingLife;
 
     Navigator.pushReplacement(
       context,
@@ -83,10 +85,7 @@ class _GameSetupPageState extends State<GameSetupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Game Setup'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Game Setup'), centerTitle: true),
       body: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 500),
@@ -101,20 +100,29 @@ class _GameSetupPageState extends State<GameSetupPage> {
                     child: TextField(
                       controller: _playerNames[i],
                       decoration: InputDecoration(
-                        labelText: 'Commander Name ${i + 1}',
+                        labelText: 'Player ${i + 1} Commander',
                         border: const OutlineInputBorder(),
                       ),
                     ),
                   );
                 }),
                 const SizedBox(height: 16),
-                TextField(
-                  controller: _startingLife,
+                DropdownButtonFormField<int>(
+                  value: _startingLife,
                   decoration: const InputDecoration(
                     labelText: 'Starting Life Total',
                     border: OutlineInputBorder(),
                   ),
-                  keyboardType: TextInputType.number,
+                  items: List.generate(10, (i) => (i + 1) * 10).map((life) {
+                    return DropdownMenuItem(value: life, child: Text('$life'));
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _startingLife = value;
+                      });
+                    }
+                  },
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
@@ -126,9 +134,11 @@ class _GameSetupPageState extends State<GameSetupPage> {
                   items: List.generate(4, (i) {
                     return DropdownMenuItem(
                       value: i,
-                      child: Text(_playerNames[i].text.isNotEmpty
-                          ? _playerNames[i].text
-                          : 'Player ${i + 1}'),
+                      child: Text(
+                        _playerNames[i].text.isNotEmpty
+                            ? _playerNames[i].text
+                            : 'Player ${i + 1}',
+                      ),
                     );
                   }),
                   onChanged: (value) {
@@ -146,7 +156,7 @@ class _GameSetupPageState extends State<GameSetupPage> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: const Text('Start Game'),
-                )
+                ),
               ],
             ),
           ),
@@ -173,8 +183,10 @@ class LifeTrackerPage extends StatefulWidget {
 }
 
 class _LifeTrackerPageState extends State<LifeTrackerPage> {
-  final List<GlobalKey<_PlayerCardState>> _playerCardKeys =
-      List.generate(4, (_) => GlobalKey<_PlayerCardState>());
+  final List<GlobalKey<_PlayerCardState>> _playerCardKeys = List.generate(
+    4,
+    (_) => GlobalKey<_PlayerCardState>(),
+  );
   late int _currentPlayerIndex;
   int _turnCount = 1;
 
@@ -191,7 +203,8 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
         return AlertDialog(
           title: const Text('New Game?'),
           content: const Text(
-              'This will end the current game and return to the setup screen.'),
+            'This will end the current game and return to the setup screen.',
+          ),
           actions: <Widget>[
             TextButton(
               child: const Text('Cancel'),
@@ -204,7 +217,8 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
               onPressed: () {
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(
-                      builder: (context) => const GameSetupPage()),
+                    builder: (context) => const GameSetupPage(),
+                  ),
                   (route) => false,
                 );
               },
@@ -366,8 +380,11 @@ class _PlayerCardState extends State<PlayerCard> {
 
   void _incrementCommanderDamage(int fromPlayerIndex) {
     setState(() {
-      _commanderDamage.update(fromPlayerIndex, (value) => value + 1,
-          ifAbsent: () => 1);
+      _commanderDamage.update(
+        fromPlayerIndex,
+        (value) => value + 1,
+        ifAbsent: () => 1,
+      );
       _life--;
     });
   }
@@ -376,8 +393,11 @@ class _PlayerCardState extends State<PlayerCard> {
     setState(() {
       if (_commanderDamage.containsKey(fromPlayerIndex) &&
           _commanderDamage[fromPlayerIndex]! > 0) {
-        _commanderDamage.update(fromPlayerIndex, (value) => value - 1,
-            ifAbsent: () => 0);
+        _commanderDamage.update(
+          fromPlayerIndex,
+          (value) => value - 1,
+          ifAbsent: () => 0,
+        );
         _life++;
       }
     });
@@ -405,8 +425,11 @@ class _PlayerCardState extends State<PlayerCard> {
     setState(() {
       if (_playerCounters.containsKey(counter) &&
           _playerCounters[counter]! > 0) {
-        _playerCounters.update(counter, (value) => value - 1,
-            ifAbsent: () => 0);
+        _playerCounters.update(
+          counter,
+          (value) => value - 1,
+          ifAbsent: () => 0,
+        );
       }
     });
   }
@@ -427,7 +450,9 @@ class _PlayerCardState extends State<PlayerCard> {
         shape: widget.isCurrentTurn
             ? RoundedRectangleBorder(
                 side: BorderSide(
-                    color: Theme.of(context).colorScheme.primary, width: 3),
+                  color: Theme.of(context).colorScheme.primary,
+                  width: 3,
+                ),
                 borderRadius: const BorderRadius.all(Radius.circular(12)),
               )
             : null,
@@ -510,16 +535,19 @@ class _PlayerCardState extends State<PlayerCard> {
                                         iconSize: 20,
                                         onPressed: () =>
                                             _decrementCommanderDamage(
-                                                fromPlayerIndex),
+                                              fromPlayerIndex,
+                                            ),
                                       ),
                                       Text(
-                                          '${_commanderDamage[fromPlayerIndex] ?? 0}'),
+                                        '${_commanderDamage[fromPlayerIndex] ?? 0}',
+                                      ),
                                       IconButton(
                                         icon: const Icon(Icons.add),
                                         iconSize: 20,
                                         onPressed: () =>
                                             _incrementCommanderDamage(
-                                                fromPlayerIndex),
+                                              fromPlayerIndex,
+                                            ),
                                       ),
                                     ],
                                   ),
@@ -571,15 +599,20 @@ class _PlayerCardState extends State<PlayerCard> {
                                         icon: const Icon(Icons.remove),
                                         iconSize: 20,
                                         onPressed: () =>
-                                            _decrementPlayerCounter(counterName),
+                                            _decrementPlayerCounter(
+                                              counterName,
+                                            ),
                                       ),
                                       Text(
-                                          '${_playerCounters[counterName] ?? 0}'),
+                                        '${_playerCounters[counterName] ?? 0}',
+                                      ),
                                       IconButton(
                                         icon: const Icon(Icons.add),
                                         iconSize: 20,
                                         onPressed: () =>
-                                            _incrementPlayerCounter(counterName),
+                                            _incrementPlayerCounter(
+                                              counterName,
+                                            ),
                                       ),
                                     ],
                                   ),
@@ -617,7 +650,9 @@ class _PlayerCardState extends State<PlayerCard> {
                     : null,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 12.0, vertical: 6.0),
+                    horizontal: 12.0,
+                    vertical: 6.0,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12.0),
@@ -625,9 +660,9 @@ class _PlayerCardState extends State<PlayerCard> {
                   child: Text(
                     'Turn ${widget.turnCount}',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.deepPurple,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: Colors.deepPurple,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
