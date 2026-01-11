@@ -36,6 +36,8 @@ class GameSetupPage extends StatefulWidget {
 
 class _GameSetupPageState extends State<GameSetupPage> {
   final _playerNames = List.generate(4, (i) => TextEditingController());
+  final _partnerNames = List.generate(4, (i) => TextEditingController());
+  final _hasPartner = List.generate(4, (i) => false);
   int _startingLife = 40;
   int _startingPlayerIndex = 0;
 
@@ -45,6 +47,9 @@ class _GameSetupPageState extends State<GameSetupPage> {
     for (var controller in _playerNames) {
       controller.addListener(() => setState(() {}));
     }
+    for (var controller in _partnerNames) {
+      controller.addListener(() => setState(() {}));
+    }
   }
 
   @override
@@ -52,17 +57,24 @@ class _GameSetupPageState extends State<GameSetupPage> {
     for (var controller in _playerNames) {
       controller.dispose();
     }
+    for (var controller in _partnerNames) {
+      controller.dispose();
+    }
     super.dispose();
   }
 
   void _startGame() {
-    final playerNames = _playerNames
-        .map(
-          (c) => c.text.isNotEmpty
-              ? c.text
-              : 'Player ${_playerNames.indexOf(c) + 1}',
-        )
-        .toList();
+    final playerNames = List.generate(4, (i) {
+      final primary = _playerNames[i].text;
+      final partner = _partnerNames[i].text;
+      if (_hasPartner[i] && primary.isNotEmpty && partner.isNotEmpty) {
+        return '$primary // $partner';
+      } else if (primary.isNotEmpty) {
+        return primary;
+      }
+      return 'Player ${i + 1}';
+    });
+
     final startingLife = _startingLife;
 
     Navigator.pushReplacement(
@@ -75,6 +87,17 @@ class _GameSetupPageState extends State<GameSetupPage> {
         ),
       ),
     );
+  }
+
+  String _getPlayerDisplayName(int i) {
+    final primary = _playerNames[i].text;
+    final partner = _partnerNames[i].text;
+    if (_hasPartner[i] && primary.isNotEmpty && partner.isNotEmpty) {
+      return '$primary // $partner';
+    } else if (primary.isNotEmpty) {
+      return primary;
+    }
+    return 'Player ${i + 1}';
   }
 
   @override
@@ -92,12 +115,47 @@ class _GameSetupPageState extends State<GameSetupPage> {
                 ...List.generate(4, (i) {
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: TextField(
-                      controller: _playerNames[i],
-                      decoration: InputDecoration(
-                        labelText: 'Player ${i + 1} Commander',
-                        border: const OutlineInputBorder(),
-                      ),
+                    child: Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _playerNames[i],
+                                decoration: InputDecoration(
+                                  labelText: 'Player ${i + 1} Commander',
+                                  border: const OutlineInputBorder(),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Text('Partner?'),
+                                Checkbox(
+                                  value: _hasPartner[i],
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _hasPartner[i] = value!;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                        if (_hasPartner[i]) ...[
+                          const SizedBox(height: 8),
+                          TextField(
+                            controller: _partnerNames[i],
+                            decoration: const InputDecoration(
+                              labelText: 'Partner Commander',
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ]
+                      ],
                     ),
                   );
                 }),
@@ -129,11 +187,7 @@ class _GameSetupPageState extends State<GameSetupPage> {
                   items: List.generate(4, (i) {
                     return DropdownMenuItem(
                       value: i,
-                      child: Text(
-                        _playerNames[i].text.isNotEmpty
-                            ? _playerNames[i].text
-                            : 'Player ${i + 1}',
-                      ),
+                      child: Text(_getPlayerDisplayName(i)),
                     );
                   }),
                   onChanged: (value) {
@@ -504,6 +558,7 @@ class _PlayerCardState extends State<PlayerCard> {
                   child: Text(
                     widget.playerName,
                     style: Theme.of(context).textTheme.titleLarge,
+                    textAlign: TextAlign.center,
                   ),
                 ),
                 Expanded(
