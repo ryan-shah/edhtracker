@@ -3,11 +3,6 @@ import 'package:flutter/services.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
-
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   runApp(const MyApp());
 }
@@ -241,81 +236,92 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Column(
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isPortrait = constraints.maxHeight > constraints.maxWidth;
+          final lifeTrackerWidget = Stack(
             children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: RotatedBox(
-                        quarterTurns: 2,
-                        child: PlayerCard(
-                          key: _playerCardKeys[0],
-                          playerIndex: 0,
-                          playerName: widget.playerNames[0],
-                          startingLife: widget.startingLife,
-                          isCurrentTurn: _currentPlayerIndex == 0,
-                          onTurnEnd: _nextTurn,
-                          turnCount: _turnCount,
+              Column(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: RotatedBox(
+                            quarterTurns: 2,
+                            child: PlayerCard(
+                              key: _playerCardKeys[0],
+                              playerIndex: 0,
+                              playerName: widget.playerNames[0],
+                              startingLife: widget.startingLife,
+                              isCurrentTurn: _currentPlayerIndex == 0,
+                              onTurnEnd: _nextTurn,
+                              turnCount: _turnCount,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    Expanded(
-                      child: RotatedBox(
-                        quarterTurns: 2,
-                        child: PlayerCard(
-                          key: _playerCardKeys[1],
-                          playerIndex: 1,
-                          playerName: widget.playerNames[1],
-                          startingLife: widget.startingLife,
-                          isCurrentTurn: _currentPlayerIndex == 1,
-                          onTurnEnd: _nextTurn,
-                          turnCount: _turnCount,
+                        Expanded(
+                          child: RotatedBox(
+                            quarterTurns: 2,
+                            child: PlayerCard(
+                              key: _playerCardKeys[1],
+                              playerIndex: 1,
+                              playerName: widget.playerNames[1],
+                              startingLife: widget.startingLife,
+                              isCurrentTurn: _currentPlayerIndex == 1,
+                              onTurnEnd: _nextTurn,
+                              turnCount: _turnCount,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
-                  ],
-                ),
+                  ),
+                  Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: PlayerCard(
+                            key: _playerCardKeys[3],
+                            playerIndex: 3,
+                            playerName: widget.playerNames[3],
+                            startingLife: widget.startingLife,
+                            isCurrentTurn: _currentPlayerIndex == 3,
+                            onTurnEnd: _nextTurn,
+                            turnCount: _turnCount,
+                          ),
+                        ),
+                        Expanded(
+                          child: PlayerCard(
+                            key: _playerCardKeys[2],
+                            playerIndex: 2,
+                            playerName: widget.playerNames[2],
+                            startingLife: widget.startingLife,
+                            isCurrentTurn: _currentPlayerIndex == 2,
+                            onTurnEnd: _nextTurn,
+                            turnCount: _turnCount,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: PlayerCard(
-                        key: _playerCardKeys[3],
-                        playerIndex: 3,
-                        playerName: widget.playerNames[3],
-                        startingLife: widget.startingLife,
-                        isCurrentTurn: _currentPlayerIndex == 3,
-                        onTurnEnd: _nextTurn,
-                        turnCount: _turnCount,
-                      ),
-                    ),
-                    Expanded(
-                      child: PlayerCard(
-                        key: _playerCardKeys[2],
-                        playerIndex: 2,
-                        playerName: widget.playerNames[2],
-                        startingLife: widget.startingLife,
-                        isCurrentTurn: _currentPlayerIndex == 2,
-                        onTurnEnd: _nextTurn,
-                        turnCount: _turnCount,
-                      ),
-                    ),
-                  ],
+              Center(
+                child: FloatingActionButton(
+                  onPressed: _showResetDialog,
+                  child: const Icon(Icons.refresh),
                 ),
               ),
             ],
-          ),
-          Center(
-            child: FloatingActionButton(
-              onPressed: _showResetDialog,
-              child: const Icon(Icons.refresh),
-            ),
-          ),
-        ],
+          );
+
+          if (isPortrait) {
+            return RotatedBox(quarterTurns: 1, child: lifeTrackerWidget);
+          } else {
+            return lifeTrackerWidget;
+          }
+        },
       ),
     );
   }
@@ -499,8 +505,10 @@ class _PlayerCardState extends State<PlayerCard> {
                 ),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceEvenly,
+                    spacing: 8.0,
+                    runSpacing: 4.0,
                     children: [
                       ElevatedButton(
                         onPressed: _toggleCommanderDamage,
