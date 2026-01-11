@@ -498,10 +498,18 @@ class _PlayerCardState extends State<PlayerCard> {
                     children: [
                       ElevatedButton(
                         onPressed: _toggleCommanderDamage,
-                        child: const Text('Commander Dmg'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.deepPurple,
+                        ),
+                        child: const Text('Cmdr Dmg'),
                       ),
                       ElevatedButton(
                         onPressed: _togglePlayerCounters,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.deepPurple,
+                        ),
                         child: const Text('Counters'),
                       ),
                     ],
