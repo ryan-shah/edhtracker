@@ -378,6 +378,12 @@ class _PlayerCardState extends State<PlayerCard> {
     });
   }
 
+  void _payLife() {
+    setState(() {
+      _life--;
+    });
+  }
+
   void _incrementCommanderDamage(int fromPlayerIndex) {
     setState(() {
       _commanderDamage.update(
@@ -503,6 +509,14 @@ class _PlayerCardState extends State<PlayerCard> {
                           foregroundColor: Colors.deepPurple,
                         ),
                         child: const Text('Cmdr Dmg'),
+                      ),
+                      ElevatedButton(
+                        onPressed: _payLife,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: Colors.deepPurple,
+                        ),
+                        child: const Text('Pay Life'),
                       ),
                       ElevatedButton(
                         onPressed: _togglePlayerCounters,
