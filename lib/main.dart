@@ -1,7 +1,32 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
+import 'package:http/http.dart' as http;
+
+String _truncateName(String name, {int maxLength = 40, double? availableWidth}) {
+  if (availableWidth != null) {
+    // For PlayerCard: Estimate max characters based on available width.
+    // Assuming an average character width of ~10.0 pixels for titleLarge text style.
+    const double estimatedCharWidth = 10.0;
+    final dynamicMaxLength = (availableWidth / estimatedCharWidth).floor();
+    
+    if (name.length <= dynamicMaxLength) {
+      return name;
+    }
+    
+    // Set maxLength to the calculated dynamic limit, ensuring it's at least 5 
+    // to allow for "..." and a couple of characters.
+    maxLength = max(5, dynamicMaxLength); 
+  }
+
+  if (name.length <= maxLength) {
+    return name;
+  }
+  return '${name.substring(0, maxLength - 3)}...';
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +50,77 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home: const GameSetupPage(),
+    );
+  }
+}
+
+class CommanderAutocomplete extends StatelessWidget {
+  final TextEditingController controller;
+  final String labelText;
+  final bool isPartner;
+
+  const CommanderAutocomplete({
+    super.key,
+    required this.controller,
+    required this.labelText,
+    this.isPartner = false,
+  });
+
+  Future<List<String>> _getSuggestions(String pattern) async {
+    if (pattern.length < 3) {
+      return Future.value([]);
+    }
+    String query = 'name:"$pattern" is:commander';
+    if (isPartner) {
+      query += ' is:partner';
+    }
+
+    final uri = Uri.https('api.scryfall.com', '/cards/search', {
+      'q': query,
+      'order': 'edhrec',
+    });
+
+    final response = await http.get(
+      uri,
+      headers: {
+        'User-Agent': 'EDHTracker/1.0',
+        'Accept': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['object'] == 'list' && data['data'] != null) {
+        final cards = data['data'] as List;
+        return cards.map((card) => card['name'] as String).toList();
+      }
+    }
+    return [];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TypeAheadField<String>(
+      suggestionsCallback: _getSuggestions,
+      builder: (context, controller, primaryFocus) {
+        return TextField(
+          controller: controller,
+          focusNode: primaryFocus,
+          decoration: InputDecoration(
+            labelText: labelText,
+            border: const OutlineInputBorder(),
+          ),
+        );
+      },
+      controller: controller,
+      itemBuilder: (context, suggestion) {
+        return ListTile(
+          title: Text(suggestion),
+        );
+      },
+      onSelected: (suggestion) {
+        controller.text = suggestion;
+      },
     );
   }
 }
@@ -98,12 +194,16 @@ class _GameSetupPageState extends State<GameSetupPage> {
   String _getPlayerDisplayName(int i) {
     final primary = _playerNames[i].text;
     final partner = _partnerNames[i].text;
+    String name;
     if (_hasPartner[i] && primary.isNotEmpty && partner.isNotEmpty) {
-      return '$primary // $partner';
+      name = '$primary // $partner';
     } else if (primary.isNotEmpty) {
-      return primary;
+      name = primary;
+    } else {
+      name = 'Player ${i + 1}';
     }
-    return 'Player ${i + 1}';
+    // Use a static, generous max length for the dropdown display
+    return _truncateName(name);
   }
 
   @override
@@ -126,12 +226,9 @@ class _GameSetupPageState extends State<GameSetupPage> {
                         Row(
                           children: [
                             Expanded(
-                              child: TextField(
+                              child: CommanderAutocomplete(
                                 controller: _playerNames[i],
-                                decoration: InputDecoration(
-                                  labelText: 'Player ${i + 1} Commander',
-                                  border: const OutlineInputBorder(),
-                                ),
+                                labelText: 'Player ${i + 1} Commander',
                               ),
                             ),
                             const SizedBox(width: 8),
@@ -153,12 +250,10 @@ class _GameSetupPageState extends State<GameSetupPage> {
                         ),
                         if (_hasPartner[i]) ...[
                           const SizedBox(height: 8),
-                          TextField(
+                          CommanderAutocomplete(
                             controller: _partnerNames[i],
-                            decoration: const InputDecoration(
-                              labelText: 'Partner Commander',
-                              border: OutlineInputBorder(),
-                            ),
+                            labelText: 'Partner Commander',
+                            isPartner: true,
                           ),
                         ]
                       ],
@@ -567,10 +662,17 @@ class _PlayerCardState extends State<PlayerCard> {
               children: [
                 Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Text(
-                    widget.playerName,
-                    style: Theme.of(context).textTheme.titleLarge,
-                    textAlign: TextAlign.center,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Text(
+                        _truncateName(
+                          widget.playerName,
+                          availableWidth: constraints.maxWidth,
+                        ),
+                        style: Theme.of(context).textTheme.titleLarge,
+                        textAlign: TextAlign.center,
+                      );
+                    },
                   ),
                 ),
                 Expanded(
