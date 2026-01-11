@@ -232,130 +232,146 @@ class PlayerCardState extends State<PlayerCard> {
             if (_showCommanderDamage)
               Container(
                 color: Theme.of(context).cardColor, // Opaque background
-                child: Stack(
-                  children: [
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final crossAxisCount = constraints.maxWidth > 350 ? 2 : 1;
+                    final rows = (4 / crossAxisCount).ceil();
+                    final itemWidth = constraints.maxWidth / crossAxisCount;
+                    final itemHeight = (constraints.maxHeight - 60) / rows; // Adjust for close button
+                    final childAspectRatio = itemWidth / itemHeight;
+
+                    return Stack(
                       children: [
-                        Expanded(
-                          child: GridView.count(
-                            crossAxisCount: 2,
-                            childAspectRatio: 2.5,
-                            children: allPlayers.map((fromPlayerIndex) {
-                              return Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text('From P${fromPlayerIndex + 1}:'),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.remove),
-                                        iconSize: 20,
-                                        onPressed: () =>
-                                            _decrementCommanderDamage(
-                                              fromPlayerIndex,
-                                            ),
-                                      ),
-                                      Text(
-                                        '${_commanderDamage[fromPlayerIndex] ?? 0}',
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.add),
-                                        iconSize: 20,
-                                        onPressed: () =>
-                                            _incrementCommanderDamage(
-                                              fromPlayerIndex,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              );
-                            }).toList(),
+                        GridView.count(
+                          crossAxisCount: crossAxisCount,
+                          childAspectRatio: childAspectRatio,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: allPlayers.map((fromPlayerIndex) {
+                            return Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'From P${fromPlayerIndex + 1}:',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.remove),
+                                      iconSize: constraints.maxWidth > 300 ? 24 : 18,
+                                      onPressed: () =>
+                                          _decrementCommanderDamage(
+                                            fromPlayerIndex,
+                                          ),
+                                    ),
+                                    Text(
+                                      '${_commanderDamage[fromPlayerIndex] ?? 0}',
+                                      style: Theme.of(context).textTheme.titleMedium,
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.add),
+                                      iconSize: constraints.maxWidth > 300 ? 24 : 18,
+                                      onPressed: () =>
+                                          _incrementCommanderDamage(
+                                            fromPlayerIndex,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                        Positioned(
+                          bottom: 8,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: FloatingActionButton(
+                              onPressed: _toggleCommanderDamage,
+                              backgroundColor: Colors.red,
+                              mini: true,
+                              child: const Icon(Icons.close),
+                            ),
                           ),
                         ),
                       ],
-                    ),
-                    Positioned(
-                      bottom: 8,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: FloatingActionButton(
-                          onPressed: _toggleCommanderDamage,
-                          backgroundColor: Colors.red,
-                          mini: true,
-                          child: const Icon(Icons.close),
-                        ),
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
             // Overlay: Player Counters
             if (_showPlayerCounters)
               Container(
                 color: Theme.of(context).cardColor, // Opaque background
-                child: Stack(
-                  children: [
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final crossAxisCount = constraints.maxWidth > 350 ? 2 : 1;
+                    final rows = (playerCounterTypes.length / crossAxisCount).ceil();
+                    final itemWidth = constraints.maxWidth / crossAxisCount;
+                    final itemHeight = (constraints.maxHeight - 60) / rows; // Adjust for close button
+                    final childAspectRatio = itemWidth / itemHeight;
+
+                    return Stack(
                       children: [
-                        Expanded(
-                          child: GridView.count(
-                            crossAxisCount: 2,
-                            childAspectRatio: 2.5,
-                            children: playerCounterTypes.map((counterName) {
-                              return Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(counterName),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.remove),
-                                        iconSize: 20,
-                                        onPressed: () =>
-                                            _decrementPlayerCounter(
-                                              counterName,
-                                            ),
-                                      ),
-                                      Text(
-                                        '${_playerCounters[counterName] ?? 0}',
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(Icons.add),
-                                        iconSize: 20,
-                                        onPressed: () =>
-                                            _incrementPlayerCounter(
-                                              counterName,
-                                            ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              );
-                            }).toList(),
+                        GridView.count(
+                          crossAxisCount: crossAxisCount,
+                          childAspectRatio: childAspectRatio,
+                          physics: const NeverScrollableScrollPhysics(),
+                          children: playerCounterTypes.map((counterName) {
+                            return Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  counterName,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    IconButton(
+                                      icon: const Icon(Icons.remove),
+                                      iconSize: constraints.maxWidth > 300 ? 24 : 18,
+                                      onPressed: () =>
+                                          _decrementPlayerCounter(
+                                            counterName,
+                                          ),
+                                    ),
+                                    Text(
+                                      '${_playerCounters[counterName] ?? 0}',
+                                      style: Theme.of(context).textTheme.titleMedium,
+                                    ),
+                                    IconButton(
+                                      icon: const Icon(Icons.add),
+                                      iconSize: constraints.maxWidth > 300 ? 24 : 18,
+                                      onPressed: () =>
+                                          _incrementPlayerCounter(
+                                            counterName,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            );
+                          }).toList(),
+                        ),
+                        Positioned(
+                          bottom: 8,
+                          left: 0,
+                          right: 0,
+                          child: Center(
+                            child: FloatingActionButton(
+                              onPressed: _togglePlayerCounters,
+                              backgroundColor: Colors.red,
+                              mini: true,
+                              child: const Icon(Icons.close),
+                            ),
                           ),
                         ),
                       ],
-                    ),
-                    Positioned(
-                      bottom: 8,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: FloatingActionButton(
-                          onPressed: _togglePlayerCounters,
-                          backgroundColor: Colors.red,
-                          mini: true,
-                          child: const Icon(Icons.close),
-                        ),
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
             if (widget.isCurrentTurn)
