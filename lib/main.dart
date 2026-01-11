@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -39,7 +41,7 @@ class _GameSetupPageState extends State<GameSetupPage> {
   final _partnerNames = List.generate(4, (i) => TextEditingController());
   final _hasPartner = List.generate(4, (i) => false);
   int _startingLife = 40;
-  int _startingPlayerIndex = 0;
+  int _startingPlayerIndex = -1;
 
   @override
   void initState() {
@@ -76,6 +78,10 @@ class _GameSetupPageState extends State<GameSetupPage> {
     });
 
     final startingLife = _startingLife;
+    var startingPlayerIndex = _startingPlayerIndex;
+    if (startingPlayerIndex == -1) {
+      startingPlayerIndex = Random().nextInt(4);
+    }
 
     Navigator.pushReplacement(
       context,
@@ -83,7 +89,7 @@ class _GameSetupPageState extends State<GameSetupPage> {
         builder: (context) => LifeTrackerPage(
           playerNames: playerNames,
           startingLife: startingLife,
-          startingPlayerIndex: _startingPlayerIndex,
+          startingPlayerIndex: startingPlayerIndex,
         ),
       ),
     );
@@ -179,17 +185,23 @@ class _GameSetupPageState extends State<GameSetupPage> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
-                  initialValue: _startingPlayerIndex,
+                  value: _startingPlayerIndex,
                   decoration: const InputDecoration(
                     labelText: 'Starting Player',
                     border: OutlineInputBorder(),
                   ),
-                  items: List.generate(4, (i) {
-                    return DropdownMenuItem(
-                      value: i,
-                      child: Text(_getPlayerDisplayName(i)),
-                    );
-                  }),
+                  items: [
+                    const DropdownMenuItem(
+                      value: -1,
+                      child: Text('Random'),
+                    ),
+                    ...List.generate(4, (i) {
+                      return DropdownMenuItem(
+                        value: i,
+                        child: Text(_getPlayerDisplayName(i)),
+                      );
+                    }),
+                  ],
                   onChanged: (value) {
                     if (value != null) {
                       setState(() {
