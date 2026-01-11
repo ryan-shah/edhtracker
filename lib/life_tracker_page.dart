@@ -4,12 +4,14 @@ import 'game_setup_page.dart';
 
 class LifeTrackerPage extends StatefulWidget {
   final List<String> playerNames;
+  final List<List<String>> playerArtUrls;
   final int startingLife;
   final int startingPlayerIndex;
 
   const LifeTrackerPage({
     super.key,
     required this.playerNames,
+    required this.playerArtUrls,
     required this.startingLife,
     required this.startingPlayerIndex,
   });
@@ -49,7 +51,43 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
               },
             ),
             TextButton(
-              child: const Text('New Game'),
+              child: const Text('New Game with Same Players'),
+              onPressed: () {
+                final List<String> initialPlayerNames = [];
+                final List<String> initialPartnerNames = [];
+                final List<bool> initialHasPartner = [];
+
+                for (final playerName in widget.playerNames) {
+                  if (playerName.contains(' // ')) {
+                    final parts = playerName.split(' // ');
+                    initialPlayerNames.add(parts[0]);
+                    initialPartnerNames.add(parts[1]);
+                    initialHasPartner.add(true);
+                  } else if (playerName.startsWith('Player ')) {
+                    initialPlayerNames.add(''); // No commander entered
+                    initialPartnerNames.add('');
+                    initialHasPartner.add(false);
+                  } else {
+                    initialPlayerNames.add(playerName);
+                    initialPartnerNames.add('');
+                    initialHasPartner.add(false);
+                  }
+                }
+
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (context) => GameSetupPage(
+                      initialPlayerNames: initialPlayerNames,
+                      initialPartnerNames: initialPartnerNames,
+                      initialHasPartner: initialHasPartner,
+                    ),
+                  ),
+                  (route) => false,
+                );
+              },
+            ),
+            TextButton(
+              child: const Text('New Game (Clear Players)'),
               onPressed: () {
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(
@@ -107,6 +145,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                               key: _playerCardKeys[0],
                               playerIndex: 0,
                               playerName: widget.playerNames[0],
+                              backgroundUrls: widget.playerArtUrls[0],
                               startingLife: widget.startingLife,
                               isCurrentTurn: _currentPlayerIndex == 0,
                               onTurnEnd: _nextTurn,
@@ -122,6 +161,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                               key: _playerCardKeys[1],
                               playerIndex: 1,
                               playerName: widget.playerNames[1],
+                              backgroundUrls: widget.playerArtUrls[1],
                               startingLife: widget.startingLife,
                               isCurrentTurn: _currentPlayerIndex == 1,
                               onTurnEnd: _nextTurn,
@@ -141,6 +181,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                             key: _playerCardKeys[3],
                             playerIndex: 3,
                             playerName: widget.playerNames[3],
+                            backgroundUrls: widget.playerArtUrls[3],
                             startingLife: widget.startingLife,
                             isCurrentTurn: _currentPlayerIndex == 3,
                             onTurnEnd: _nextTurn,
@@ -153,6 +194,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                             key: _playerCardKeys[2],
                             playerIndex: 2,
                             playerName: widget.playerNames[2],
+                            backgroundUrls: widget.playerArtUrls[2],
                             startingLife: widget.startingLife,
                             isCurrentTurn: _currentPlayerIndex == 2,
                             onTurnEnd: _nextTurn,

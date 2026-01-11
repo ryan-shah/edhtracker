@@ -4,6 +4,7 @@ import 'utils.dart';
 class PlayerCard extends StatefulWidget {
   final int playerIndex;
   final String playerName;
+  final List<String> backgroundUrls;
   final int startingLife;
   final bool isCurrentTurn;
   final VoidCallback onTurnEnd;
@@ -14,6 +15,7 @@ class PlayerCard extends StatefulWidget {
     super.key,
     required this.playerIndex,
     required this.playerName,
+    this.backgroundUrls = const [],
     required this.startingLife,
     required this.isCurrentTurn,
     required this.onTurnEnd,
@@ -140,6 +142,7 @@ class PlayerCardState extends State<PlayerCard> {
       },
       child: Card(
         margin: const EdgeInsets.all(4.0),
+        clipBehavior: Clip.antiAlias, // Important for background image to fit card shape
         shape: widget.isCurrentTurn
             ? RoundedRectangleBorder(
                 side: BorderSide(
@@ -152,25 +155,49 @@ class PlayerCardState extends State<PlayerCard> {
         child: Stack(
           alignment: Alignment.center,
           children: [
+            // Background Layer: Card Art
+            if (widget.backgroundUrls.isNotEmpty)
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.4,
+                  child: Row(
+                    children: widget.backgroundUrls.map((url) {
+                      return Expanded(
+                        child: Image.network(
+                          url,
+                          fit: BoxFit.cover,
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
             // Base layer: Life counter
             Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      return Text(
-                        truncateName(
-                          widget.playerName,
-                          availableWidth: constraints.maxWidth,
-                        ),
-                        style: Theme.of(context).textTheme.titleLarge,
-                        textAlign: TextAlign.center,
-                      );
-                    },
+                // Only show name if we don't have background art
+                if (widget.backgroundUrls.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        return Text(
+                          truncateName(
+                            widget.playerName,
+                            availableWidth: constraints.maxWidth,
+                          ),
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        );
+                      },
+                    ),
                   ),
-                ),
+                // Add some top padding if name is hidden so life counter isn't at the very top
+                if (widget.backgroundUrls.isNotEmpty) const SizedBox(height: 20),
                 Expanded(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -179,15 +206,36 @@ class PlayerCardState extends State<PlayerCard> {
                         icon: const Icon(Icons.remove),
                         onPressed: _decrementLife,
                         iconSize: 28,
+                        color: Colors.white,
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.black26,
+                        ),
                       ),
-                      Text(
-                        '$_life',
-                        style: Theme.of(context).textTheme.displayLarge,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Text(
+                          '$_life',
+                          style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            shadows: [
+                              const Shadow(
+                                blurRadius: 10.0,
+                                color: Colors.black,
+                                offset: Offset(2, 2),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                       IconButton(
                         icon: const Icon(Icons.add),
                         onPressed: _incrementLife,
                         iconSize: 28,
+                        color: Colors.white,
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.black26,
+                        ),
                       ),
                     ],
                   ),
@@ -202,7 +250,7 @@ class PlayerCardState extends State<PlayerCard> {
                       ElevatedButton(
                         onPressed: _toggleCommanderDamage,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
+                          backgroundColor: Colors.white.withOpacity(0.9),
                           foregroundColor: Colors.deepPurple,
                         ),
                         child: const Text('Cmdr Dmg'),
@@ -210,7 +258,7 @@ class PlayerCardState extends State<PlayerCard> {
                       ElevatedButton(
                         onPressed: _payLife,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
+                          backgroundColor: Colors.white.withOpacity(0.9),
                           foregroundColor: Colors.deepPurple,
                         ),
                         child: const Text('Pay Life'),
@@ -218,7 +266,7 @@ class PlayerCardState extends State<PlayerCard> {
                       ElevatedButton(
                         onPressed: _togglePlayerCounters,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white,
+                          backgroundColor: Colors.white.withOpacity(0.9),
                           foregroundColor: Colors.deepPurple,
                         ),
                         child: const Text('Counters'),
@@ -231,13 +279,13 @@ class PlayerCardState extends State<PlayerCard> {
             // Overlay: Commander Damage
             if (_showCommanderDamage)
               Container(
-                color: Theme.of(context).cardColor, // Opaque background
+                color: Theme.of(context).cardColor.withOpacity(0.95),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final crossAxisCount = constraints.maxWidth > 350 ? 2 : 1;
                     final rows = (4 / crossAxisCount).ceil();
                     final itemWidth = constraints.maxWidth / crossAxisCount;
-                    final itemHeight = (constraints.maxHeight - 60) / rows; // Adjust for close button
+                    final itemHeight = (constraints.maxHeight - 60) / rows;
                     final childAspectRatio = itemWidth / itemHeight;
 
                     return Stack(
@@ -304,13 +352,13 @@ class PlayerCardState extends State<PlayerCard> {
             // Overlay: Player Counters
             if (_showPlayerCounters)
               Container(
-                color: Theme.of(context).cardColor, // Opaque background
+                color: Theme.of(context).cardColor.withOpacity(0.95),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final crossAxisCount = constraints.maxWidth > 350 ? 2 : 1;
                     final rows = (playerCounterTypes.length / crossAxisCount).ceil();
                     final itemWidth = constraints.maxWidth / crossAxisCount;
-                    final itemHeight = (constraints.maxHeight - 60) / rows; // Adjust for close button
+                    final itemHeight = (constraints.maxHeight - 60) / rows;
                     final childAspectRatio = itemWidth / itemHeight;
 
                     return Stack(
