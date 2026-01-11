@@ -103,7 +103,7 @@ class _GameSetupPageState extends State<GameSetupPage> {
                 }),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
-                  value: _startingLife,
+                  initialValue: _startingLife,
                   decoration: const InputDecoration(
                     labelText: 'Starting Life Total',
                     border: OutlineInputBorder(),
@@ -121,7 +121,7 @@ class _GameSetupPageState extends State<GameSetupPage> {
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<int>(
-                  value: _startingPlayerIndex,
+                  initialValue: _startingPlayerIndex,
                   decoration: const InputDecoration(
                     labelText: 'Starting Player',
                     border: OutlineInputBorder(),
@@ -233,6 +233,19 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
     });
   }
 
+  void _previousTurn() {
+    setState(() {
+      if (_turnCount == 1 && _currentPlayerIndex == widget.startingPlayerIndex) {
+        return;
+      }
+      final bool isNewTurn = _currentPlayerIndex == widget.startingPlayerIndex;
+      _currentPlayerIndex = (_currentPlayerIndex - 1 + 4) % 4;
+      if (isNewTurn) {
+        _turnCount--;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -256,6 +269,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                               startingLife: widget.startingLife,
                               isCurrentTurn: _currentPlayerIndex == 0,
                               onTurnEnd: _nextTurn,
+                              onTurnBack: _previousTurn,
                               turnCount: _turnCount,
                             ),
                           ),
@@ -270,6 +284,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                               startingLife: widget.startingLife,
                               isCurrentTurn: _currentPlayerIndex == 1,
                               onTurnEnd: _nextTurn,
+                              onTurnBack: _previousTurn,
                               turnCount: _turnCount,
                             ),
                           ),
@@ -288,6 +303,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                             startingLife: widget.startingLife,
                             isCurrentTurn: _currentPlayerIndex == 3,
                             onTurnEnd: _nextTurn,
+                            onTurnBack: _previousTurn,
                             turnCount: _turnCount,
                           ),
                         ),
@@ -299,6 +315,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                             startingLife: widget.startingLife,
                             isCurrentTurn: _currentPlayerIndex == 2,
                             onTurnEnd: _nextTurn,
+                            onTurnBack: _previousTurn,
                             turnCount: _turnCount,
                           ),
                         ),
@@ -333,6 +350,7 @@ class PlayerCard extends StatefulWidget {
   final int startingLife;
   final bool isCurrentTurn;
   final VoidCallback onTurnEnd;
+  final VoidCallback onTurnBack;
   final int turnCount;
 
   const PlayerCard({
@@ -342,6 +360,7 @@ class PlayerCard extends StatefulWidget {
     required this.startingLife,
     required this.isCurrentTurn,
     required this.onTurnEnd,
+    required this.onTurnBack,
     required this.turnCount,
   });
 
@@ -455,6 +474,11 @@ class _PlayerCardState extends State<PlayerCard> {
       onTap: () {
         if (widget.isCurrentTurn) {
           widget.onTurnEnd();
+        }
+      },
+      onLongPress: () {
+        if (widget.isCurrentTurn) {
+          widget.onTurnBack();
         }
       },
       child: Card(
