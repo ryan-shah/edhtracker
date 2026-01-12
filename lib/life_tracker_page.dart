@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'player_card.dart';
 import 'game_setup_page.dart';
+import 'help_page.dart';
 
 class LifeTrackerPage extends StatefulWidget {
   final List<String> playerNames;
@@ -31,6 +32,9 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
   );
   late int _currentPlayerIndex;
   int _turnCount = 1;
+  bool _menuOpen = false;
+  
+  static const double _menuOffset = 100.0; // Fixed offset from center
 
   @override
   void initState() {
@@ -109,6 +113,12 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
     );
   }
 
+  void _toggleMenu() {
+    setState(() {
+      _menuOpen = !_menuOpen;
+    });
+  }
+
   void _nextTurn() {
     setState(() {
       _currentPlayerIndex = (_currentPlayerIndex + 1) % 4;
@@ -137,100 +147,192 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isPortrait = constraints.maxHeight > constraints.maxWidth;
-          final lifeTrackerWidget = Stack(
+          
+          final playerCardsWidget = Column(
             children: [
-              Column(
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: RotatedBox(
-                            quarterTurns: 2,
-                            child: PlayerCard(
-                              key: _playerCardKeys[0],
-                              playerIndex: 0,
-                              playerName: widget.playerNames[0],
-                              allCommanderNames: widget.playerCommanderNames,
-                              backgroundUrls: widget.playerArtUrls[0],
-                              startingLife: widget.startingLife,
-                              isCurrentTurn: _currentPlayerIndex == 0,
-                              onTurnEnd: _nextTurn,
-                              onTurnBack: _previousTurn,
-                              turnCount: _turnCount,
-                            ),
-                          ),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: RotatedBox(
+                        quarterTurns: 2,
+                        child: PlayerCard(
+                          key: _playerCardKeys[0],
+                          playerIndex: 0,
+                          playerName: widget.playerNames[0],
+                          allCommanderNames: widget.playerCommanderNames,
+                          backgroundUrls: widget.playerArtUrls[0],
+                          startingLife: widget.startingLife,
+                          isCurrentTurn: _currentPlayerIndex == 0,
+                          onTurnEnd: _nextTurn,
+                          onTurnBack: _previousTurn,
+                          turnCount: _turnCount,
                         ),
-                        Expanded(
-                          child: RotatedBox(
-                            quarterTurns: 2,
-                            child: PlayerCard(
-                              key: _playerCardKeys[1],
-                              playerIndex: 1,
-                              playerName: widget.playerNames[1],
-                              allCommanderNames: widget.playerCommanderNames,
-                              backgroundUrls: widget.playerArtUrls[1],
-                              startingLife: widget.startingLife,
-                              isCurrentTurn: _currentPlayerIndex == 1,
-                              onTurnEnd: _nextTurn,
-                              onTurnBack: _previousTurn,
-                              turnCount: _turnCount,
-                            ),
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: PlayerCard(
-                            key: _playerCardKeys[3],
-                            playerIndex: 3,
-                            playerName: widget.playerNames[3],
-                            allCommanderNames: widget.playerCommanderNames,
-                            backgroundUrls: widget.playerArtUrls[3],
-                            startingLife: widget.startingLife,
-                            isCurrentTurn: _currentPlayerIndex == 3,
-                            onTurnEnd: _nextTurn,
-                            onTurnBack: _previousTurn,
-                            turnCount: _turnCount,
-                          ),
+                    Expanded(
+                      child: RotatedBox(
+                        quarterTurns: 2,
+                        child: PlayerCard(
+                          key: _playerCardKeys[1],
+                          playerIndex: 1,
+                          playerName: widget.playerNames[1],
+                          allCommanderNames: widget.playerCommanderNames,
+                          backgroundUrls: widget.playerArtUrls[1],
+                          startingLife: widget.startingLife,
+                          isCurrentTurn: _currentPlayerIndex == 1,
+                          onTurnEnd: _nextTurn,
+                          onTurnBack: _previousTurn,
+                          turnCount: _turnCount,
                         ),
-                        Expanded(
-                          child: PlayerCard(
-                            key: _playerCardKeys[2],
-                            playerIndex: 2,
-                            playerName: widget.playerNames[2],
-                            allCommanderNames: widget.playerCommanderNames,
-                            backgroundUrls: widget.playerArtUrls[2],
-                            startingLife: widget.startingLife,
-                            isCurrentTurn: _currentPlayerIndex == 2,
-                            onTurnEnd: _nextTurn,
-                            onTurnBack: _previousTurn,
-                            turnCount: _turnCount,
-                          ),
-                        ),
-                      ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              Center(
-                child: FloatingActionButton(
-                  onPressed: _showResetDialog,
-                  child: const Icon(Icons.refresh),
+              Expanded(
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: PlayerCard(
+                        key: _playerCardKeys[3],
+                        playerIndex: 3,
+                        playerName: widget.playerNames[3],
+                        allCommanderNames: widget.playerCommanderNames,
+                        backgroundUrls: widget.playerArtUrls[3],
+                        startingLife: widget.startingLife,
+                        isCurrentTurn: _currentPlayerIndex == 3,
+                        onTurnEnd: _nextTurn,
+                        onTurnBack: _previousTurn,
+                        turnCount: _turnCount,
+                      ),
+                    ),
+                    Expanded(
+                      child: PlayerCard(
+                        key: _playerCardKeys[2],
+                        playerIndex: 2,
+                        playerName: widget.playerNames[2],
+                        allCommanderNames: widget.playerCommanderNames,
+                        backgroundUrls: widget.playerArtUrls[2],
+                        startingLife: widget.startingLife,
+                        isCurrentTurn: _currentPlayerIndex == 2,
+                        onTurnEnd: _nextTurn,
+                        onTurnBack: _previousTurn,
+                        turnCount: _turnCount,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           );
 
-          if (isPortrait) {
-            return RotatedBox(quarterTurns: 1, child: lifeTrackerWidget);
-          } else {
-            return lifeTrackerWidget;
-          }
+          final lifeTrackerWidget = isPortrait 
+            ? RotatedBox(quarterTurns: 1, child: playerCardsWidget)
+            : playerCardsWidget;
+
+          // Calculate center of screen and offset by fixed amount
+          final centerX = constraints.maxWidth / 2;
+          final centerY = constraints.maxHeight / 2;
+
+          return Stack(
+            children: [
+              lifeTrackerWidget,
+              Center(
+                child: Stack(
+                  children: [
+                    // Help button (top)
+                    if (_menuOpen)
+                      Positioned(
+                        top: centerY - _menuOffset,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: FloatingActionButton(
+                            heroTag: 'help_button',
+                            mini: true,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const HelpPage(),
+                                ),
+                              );
+                            },
+                            child: const Icon(Icons.help_outline),
+                          ),
+                        ),
+                      ),
+                    // Start new game button (right)
+                    if (_menuOpen)
+                      Positioned(
+                        right: centerX - _menuOffset,
+                        top: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: FloatingActionButton(
+                            heroTag: 'new_game_button',
+                            mini: true,
+                            onPressed: () {
+                              setState(() => _menuOpen = false);
+                              _showResetDialog();
+                            },
+                            child: const Icon(Icons.play_arrow),
+                          ),
+                        ),
+                      ),
+                    // Complete current game button (bottom)
+                    if (_menuOpen)
+                      Positioned(
+                        bottom: centerY - _menuOffset,
+                        left: 0,
+                        right: 0,
+                        child: Center(
+                          child: FloatingActionButton(
+                            heroTag: 'complete_game_button',
+                            mini: true,
+                            onPressed: () {
+                              // TODO: Implement complete game functionality
+                              setState(() => _menuOpen = false);
+                            },
+                            child: const Icon(Icons.check_circle_outline),
+                          ),
+                        ),
+                      ),
+                    // Left button (close)
+                    if (_menuOpen)
+                      Positioned(
+                        left: centerX - _menuOffset,
+                        top: 0,
+                        bottom: 0,
+                        child: Center(
+                          child: FloatingActionButton(
+                            heroTag: 'close_menu_button',
+                            mini: true,
+                            onPressed: () {
+                              setState(() => _menuOpen = false);
+                            },
+                            child: const Icon(Icons.close),
+                          ),
+                        ),
+                      ),
+                    // Main menu button (center)
+                    Center(
+                      child: FloatingActionButton(
+                        heroTag: 'main_menu_button',
+                        onPressed: _toggleMenu,
+                        child: AnimatedRotation(
+                          turns: _menuOpen ? 0.125 : 0,
+                          duration: const Duration(milliseconds: 200),
+                          child: const Icon(Icons.menu),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
         },
       ),
     );
