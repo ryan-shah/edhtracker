@@ -73,27 +73,33 @@ class _GameSetupPageState extends State<GameSetupPage> {
     });
 
     final playerNames = <String>[];
+    final playerCommanderNames = <List<String>>[];
     final playerArtUrls = <List<String>>[];
 
     for (int i = 0; i < 4; i++) {
       final primary = _playerNames[i].text;
       final partner = _partnerNames[i].text;
       final currentArtUrls = <String>[];
+      final currentCommanderNames = <String>[];
 
       if (_hasPartner[i] && primary.isNotEmpty && partner.isNotEmpty) {
         playerNames.add('$primary // $partner');
+        currentCommanderNames.addAll([primary, partner]);
         final primaryArt = await ScryfallService.getCardArtUrl(primary);
         final partnerArt = await ScryfallService.getCardArtUrl(partner);
         if (primaryArt != null) currentArtUrls.add(primaryArt);
         if (partnerArt != null) currentArtUrls.add(partnerArt);
       } else if (primary.isNotEmpty) {
         playerNames.add(primary);
+        currentCommanderNames.add(primary);
         final primaryArt = await ScryfallService.getCardArtUrl(primary);
         if (primaryArt != null) currentArtUrls.add(primaryArt);
       } else {
         playerNames.add('Player ${i + 1}');
+        currentCommanderNames.add('Player ${i + 1}');
       }
       playerArtUrls.add(currentArtUrls);
+      playerCommanderNames.add(currentCommanderNames);
     }
 
     final startingLife = _startingLife;
@@ -113,6 +119,7 @@ class _GameSetupPageState extends State<GameSetupPage> {
       MaterialPageRoute(
         builder: (context) => LifeTrackerPage(
           playerNames: playerNames,
+          playerCommanderNames: playerCommanderNames,
           playerArtUrls: playerArtUrls,
           startingLife: startingLife,
           startingPlayerIndex: startingPlayerIndex,

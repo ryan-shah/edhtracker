@@ -4,6 +4,7 @@ import 'game_setup_page.dart';
 
 class LifeTrackerPage extends StatefulWidget {
   final List<String> playerNames;
+  final List<List<String>> playerCommanderNames;
   final List<List<String>> playerArtUrls;
   final int startingLife;
   final int startingPlayerIndex;
@@ -12,6 +13,7 @@ class LifeTrackerPage extends StatefulWidget {
   const LifeTrackerPage({
     super.key,
     required this.playerNames,
+    required this.playerCommanderNames,
     required this.playerArtUrls,
     required this.startingLife,
     required this.startingPlayerIndex,
@@ -59,18 +61,19 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                 final List<String> initialPartnerNames = [];
                 final List<bool> initialHasPartner = [];
 
-                for (final playerName in widget.playerNames) {
-                  if (playerName.contains(' // ')) {
-                    final parts = playerName.split(' // ');
-                    initialPlayerNames.add(parts[0]);
-                    initialPartnerNames.add(parts[1]);
+                for (int i = 0; i < widget.playerCommanderNames.length; i++) {
+                  final commanders = widget.playerCommanderNames[i];
+                  if (commanders.length > 1) {
+                    initialPlayerNames.add(commanders[0]);
+                    initialPartnerNames.add(commanders[1]);
                     initialHasPartner.add(true);
-                  } else if (playerName.startsWith('Player ')) {
-                    initialPlayerNames.add(''); // No commander entered
-                    initialPartnerNames.add('');
-                    initialHasPartner.add(false);
                   } else {
-                    initialPlayerNames.add(playerName);
+                    final name = commanders[0];
+                    if (name.startsWith('Player ')) {
+                      initialPlayerNames.add('');
+                    } else {
+                      initialPlayerNames.add(name);
+                    }
                     initialPartnerNames.add('');
                     initialHasPartner.add(false);
                   }
@@ -148,6 +151,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                               key: _playerCardKeys[0],
                               playerIndex: 0,
                               playerName: widget.playerNames[0],
+                              allCommanderNames: widget.playerCommanderNames,
                               backgroundUrls: widget.playerArtUrls[0],
                               startingLife: widget.startingLife,
                               isCurrentTurn: _currentPlayerIndex == 0,
@@ -164,6 +168,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                               key: _playerCardKeys[1],
                               playerIndex: 1,
                               playerName: widget.playerNames[1],
+                              allCommanderNames: widget.playerCommanderNames,
                               backgroundUrls: widget.playerArtUrls[1],
                               startingLife: widget.startingLife,
                               isCurrentTurn: _currentPlayerIndex == 1,
@@ -184,6 +189,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                             key: _playerCardKeys[3],
                             playerIndex: 3,
                             playerName: widget.playerNames[3],
+                            allCommanderNames: widget.playerCommanderNames,
                             backgroundUrls: widget.playerArtUrls[3],
                             startingLife: widget.startingLife,
                             isCurrentTurn: _currentPlayerIndex == 3,
@@ -197,6 +203,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                             key: _playerCardKeys[2],
                             playerIndex: 2,
                             playerName: widget.playerNames[2],
+                            allCommanderNames: widget.playerCommanderNames,
                             backgroundUrls: widget.playerArtUrls[2],
                             startingLife: widget.startingLife,
                             isCurrentTurn: _currentPlayerIndex == 2,

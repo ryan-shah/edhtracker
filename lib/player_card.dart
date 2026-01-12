@@ -1,20 +1,48 @@
 import 'package:flutter/material.dart';
 import 'utils.dart';
+import 'counter_overlay.dart';
+import 'constants.dart';
 
+/// Stateless widget that represents the configuration for a player card.
+/// 
+/// Contains all the data needed to display and manage a player's game state,
+/// including commander information, starting life total, and callbacks for
+/// turn management.
 class PlayerCard extends StatefulWidget {
+  /// Index of this player (0-3)
   final int playerIndex;
+  
+  /// Display name for this player
   final String playerName;
+  
+  /// 2D list of commander names: [playerIndex][commanderIndex]
+  /// Used for tracking commander damage from each player's commander(s)
+  final List<List<String>> allCommanderNames;
+  
+  /// URLs to background images (commander art) for this player.
+  /// Can be empty if no commanders are set.
   final List<String> backgroundUrls;
+  
+  /// Starting life total for this player (usually 40 in EDH)
   final int startingLife;
+  
+  /// Whether it's currently this player's turn
   final bool isCurrentTurn;
+  
+  /// Callback to advance to the next player's turn
   final VoidCallback onTurnEnd;
+  
+  /// Callback to go back to the previous player's turn
   final VoidCallback onTurnBack;
+  
+  /// Current turn number
   final int turnCount;
 
   const PlayerCard({
     super.key,
     required this.playerIndex,
     required this.playerName,
+    required this.allCommanderNames,
     this.backgroundUrls = const [],
     required this.startingLife,
     required this.isCurrentTurn,
@@ -27,12 +55,45 @@ class PlayerCard extends StatefulWidget {
   State<PlayerCard> createState() => PlayerCardState();
 }
 
+/// State for PlayerCard widget.
+/// 
+/// Manages all the game state for a single player, including:
+/// - Life total tracking
+/// - Commander damage from each opponent
+/// - Player counters (Energy, Experience, Poison, Rad)
+/// - Action tracking (Life Paid, Cards Milled, Extra Turns)
+/// - Visibility state of various overlays
 class PlayerCardState extends State<PlayerCard> {
+  /// Current life total for this player
   late int _life;
-  final Map<int, int> _commanderDamage = {};
+  
+  /// Commander damage tracking: key = '${fromPlayerIndex}_${commanderIndex}', value = damage amount
+  final Map<String, int> _commanderDamage = {};
+  
+  /// Player counter tracking: key = counter name, value = counter amount
   final Map<String, int> _playerCounters = {};
+  
+  /// Whether the commander damage overlay is currently visible
   bool _showCommanderDamage = false;
+  
+  /// Whether the player counters overlay is currently visible
   bool _showPlayerCounters = false;
+  
+  /// Whether the actions overlay is currently visible
+  bool _showActions = false;
+
+  // ============================================================================
+  // Action Trackers
+  // ============================================================================
+  
+  /// Amount of life this player has paid (for effects like Necropotence)
+  int _lifePaid = 0;
+  
+  /// Number of cards this player has milled
+  int _cardsMilled = 0;
+  
+  /// Number of extra turns this player has taken
+  int _extraTurns = 0;
 
   @override
   void initState() {
@@ -40,6 +101,8 @@ class PlayerCardState extends State<PlayerCard> {
     _life = widget.startingLife;
   }
 
+  /// Resets all game state for this player back to initial values.
+  /// Called when starting a new game.
   void reset() {
     setState(() {
       _life = widget.startingLife;
@@ -47,31 +110,107 @@ class PlayerCardState extends State<PlayerCard> {
       _playerCounters.clear();
       _showCommanderDamage = false;
       _showPlayerCounters = false;
+      _showActions = false;
+      _lifePaid = 0;
+      _cardsMilled = 0;
+      _extraTurns = 0;
     });
   }
 
+  // ============================================================================
+  // Life Total Management
+  // ============================================================================
+
+  /// Increments life total by 1
   void _incrementLife() {
     setState(() {
       _life++;
     });
   }
 
+  /// Decrements life total by 1
   void _decrementLife() {
     setState(() {
       _life--;
     });
   }
 
-  void _payLife() {
+  // ============================================================================
+  // Life Paid Tracking
+  // ============================================================================
+
+  /// Increments life paid and decrements life total
+  void _incrementLifePaid() {
     setState(() {
+      _lifePaid++;
       _life--;
     });
   }
 
-  void _incrementCommanderDamage(int fromPlayerIndex) {
+  /// Decrements life paid and increments life total (if life paid > 0)
+  void _decrementLifePaid() {
+    setState(() {
+      if (_lifePaid > 0) {
+        _lifePaid--;
+        _life++;
+      }
+    });
+  }
+
+  // ============================================================================
+  // Cards Milled Tracking
+  // ============================================================================
+
+  /// Increments cards milled counter
+  void _incrementCardsMilled() {
+    setState(() {
+      _cardsMilled++;
+    });
+  }
+
+  /// Decrements cards milled counter (if > 0)
+  void _decrementCardsMilled() {
+    setState(() {
+      if (_cardsMilled > 0) {
+        _cardsMilled--;
+      }
+    });
+  }
+
+  // ============================================================================
+  // Extra Turns Tracking
+  // ============================================================================
+
+  /// Increments extra turns counter
+  void _incrementExtraTurns() {
+    setState(() {
+      _extraTurns++;
+    });
+  }
+
+  /// Decrements extra turns counter (if > 0)
+  void _decrementExtraTurns() {
+    setState(() {
+      if (_extraTurns > 0) {
+        _extraTurns--;
+      }
+    });
+  }
+
+  // ============================================================================
+  // Commander Damage Management
+  // ============================================================================
+
+  /// Increments commander damage from a specific player's commander.
+  /// Also decrements this player's life total.
+  /// 
+  /// [fromPlayerIndex] - Index of the player dealing damage
+  /// [commanderIndex] - Index of the commander dealing damage
+  void _incrementCommanderDamage(int fromPlayerIndex, int commanderIndex) {
+    final key = '${fromPlayerIndex}_$commanderIndex';
     setState(() {
       _commanderDamage.update(
-        fromPlayerIndex,
+        key,
         (value) => value + 1,
         ifAbsent: () => 1,
       );
@@ -79,12 +218,18 @@ class PlayerCardState extends State<PlayerCard> {
     });
   }
 
-  void _decrementCommanderDamage(int fromPlayerIndex) {
+  /// Decrements commander damage from a specific player's commander.
+  /// Also increments this player's life total if damage is > 0.
+  /// 
+  /// [fromPlayerIndex] - Index of the player dealing damage
+  /// [commanderIndex] - Index of the commander dealing damage
+  void _decrementCommanderDamage(int fromPlayerIndex, int commanderIndex) {
+    final key = '${fromPlayerIndex}_$commanderIndex';
     setState(() {
-      if (_commanderDamage.containsKey(fromPlayerIndex) &&
-          _commanderDamage[fromPlayerIndex]! > 0) {
+      if (_commanderDamage.containsKey(key) &&
+          _commanderDamage[key]! > 0) {
         _commanderDamage.update(
-          fromPlayerIndex,
+          key,
           (value) => value - 1,
           ifAbsent: () => 0,
         );
@@ -93,24 +238,52 @@ class PlayerCardState extends State<PlayerCard> {
     });
   }
 
+  // ============================================================================
+  // Overlay Visibility Management
+  // ============================================================================
+
+  /// Toggles the visibility of the commander damage overlay.
+  /// Hides other overlays when this one is shown.
   void _toggleCommanderDamage() {
     setState(() {
       _showCommanderDamage = !_showCommanderDamage;
+      _showPlayerCounters = false;
+      _showActions = false;
     });
   }
 
+  /// Toggles the visibility of the player counters overlay.
+  /// Hides other overlays when this one is shown.
   void _togglePlayerCounters() {
     setState(() {
       _showPlayerCounters = !_showPlayerCounters;
+      _showCommanderDamage = false;
+      _showActions = false;
     });
   }
 
+  /// Toggles the visibility of the actions overlay.
+  /// Hides other overlays when this one is shown.
+  void _toggleActions() {
+    setState(() {
+      _showActions = !_showActions;
+      _showCommanderDamage = false;
+      _showPlayerCounters = false;
+    });
+  }
+
+  // ============================================================================
+  // Player Counter Management
+  // ============================================================================
+
+  /// Increments a player counter (Energy, Experience, Poison, or Rad)
   void _incrementPlayerCounter(String counter) {
     setState(() {
       _playerCounters.update(counter, (value) => value + 1, ifAbsent: () => 1);
     });
   }
 
+  /// Decrements a player counter (if > 0)
   void _decrementPlayerCounter(String counter) {
     setState(() {
       if (_playerCounters.containsKey(counter) &&
@@ -126,40 +299,40 @@ class PlayerCardState extends State<PlayerCard> {
 
   @override
   Widget build(BuildContext context) {
-    final allPlayers = List.generate(4, (i) => i);
-    const playerCounterTypes = ['Energy', 'Experience', 'Poison', 'Rad'];
-
     return GestureDetector(
+      // Tap to advance to next player's turn (if current turn)
       onTap: () {
         if (widget.isCurrentTurn) {
           widget.onTurnEnd();
         }
       },
+      // Long press to go back to previous player's turn (if current turn)
       onLongPress: () {
         if (widget.isCurrentTurn) {
           widget.onTurnBack();
         }
       },
       child: Card(
-        margin: const EdgeInsets.all(4.0),
-        clipBehavior: Clip.antiAlias, // Important for background image to fit card shape
+        margin: const EdgeInsets.all(UIConstants.cardMarginAll),
+        clipBehavior: Clip.antiAlias,
+        // Highlight border for current player
         shape: widget.isCurrentTurn
             ? RoundedRectangleBorder(
                 side: BorderSide(
                   color: Theme.of(context).colorScheme.primary,
-                  width: 3,
+                  width: UIConstants.cardBorderWidth,
                 ),
-                borderRadius: const BorderRadius.all(Radius.circular(12)),
+                borderRadius: const BorderRadius.all(Radius.circular(UIConstants.cardBorderRadius)),
               )
             : null,
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Background Layer: Card Art
+            // Background: Commander art images
             if (widget.backgroundUrls.isNotEmpty)
               Positioned.fill(
                 child: Opacity(
-                  opacity: 0.4,
+                  opacity: UIConstants.backgroundImageOpacity,
                   child: Row(
                     children: widget.backgroundUrls.map((url) {
                       return Expanded(
@@ -172,14 +345,14 @@ class PlayerCardState extends State<PlayerCard> {
                   ),
                 ),
               ),
-            // Base layer: Life counter
+            // Main content column
             Column(
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                // Only show name if we don't have background art
+                // Player name (shown if no background image)
                 if (widget.backgroundUrls.isEmpty)
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.all(UIConstants.playerNamePadding),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         return Text(
@@ -188,7 +361,7 @@ class PlayerCardState extends State<PlayerCard> {
                             availableWidth: constraints.maxWidth,
                           ),
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: Colors.white,
+                            color: UIConstants.lifeCounterTextColor,
                             fontWeight: FontWeight.bold,
                           ),
                           textAlign: TextAlign.center,
@@ -196,8 +369,9 @@ class PlayerCardState extends State<PlayerCard> {
                       },
                     ),
                   ),
-                // Add some top padding if name is hidden so life counter isn't at the very top
-                if (widget.backgroundUrls.isNotEmpty) const SizedBox(height: 20),
+                // Extra spacing if background image is shown
+                if (widget.backgroundUrls.isNotEmpty) const SizedBox(height: UIConstants.backgroundPaddingIfNotEmpty),
+                // Life total display with increment/decrement buttons
                 Expanded(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -205,24 +379,24 @@ class PlayerCardState extends State<PlayerCard> {
                       IconButton(
                         icon: const Icon(Icons.remove),
                         onPressed: _decrementLife,
-                        iconSize: 28,
-                        color: Colors.white,
+                        iconSize: UIConstants.lifeCounterIconSize,
+                        color: UIConstants.lifeCounterTextColor,
                         style: IconButton.styleFrom(
-                          backgroundColor: Colors.black26,
+                          backgroundColor: UIConstants.buttonBackgroundDarkColor,
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        padding: const EdgeInsets.symmetric(horizontal: UIConstants.lifeCounterPaddingHorizontal),
                         child: Text(
                           '$_life',
                           style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                            color: Colors.white,
+                            color: UIConstants.lifeCounterTextColor,
                             fontWeight: FontWeight.bold,
                             shadows: [
-                              const Shadow(
-                                blurRadius: 10.0,
-                                color: Colors.black,
-                                offset: Offset(2, 2),
+                              Shadow(
+                                blurRadius: UIConstants.lifeCounterShadowBlurRadius,
+                                color: UIConstants.lifeCounterShadowColor,
+                                offset: const Offset(UIConstants.lifeCounterShadowOffsetX, UIConstants.lifeCounterShadowOffsetY),
                               ),
                             ],
                           ),
@@ -231,43 +405,44 @@ class PlayerCardState extends State<PlayerCard> {
                       IconButton(
                         icon: const Icon(Icons.add),
                         onPressed: _incrementLife,
-                        iconSize: 28,
-                        color: Colors.white,
+                        iconSize: UIConstants.lifeCounterIconSize,
+                        color: UIConstants.lifeCounterTextColor,
                         style: IconButton.styleFrom(
-                          backgroundColor: Colors.black26,
+                          backgroundColor: UIConstants.buttonBackgroundDarkColor,
                         ),
                       ),
                     ],
                   ),
                 ),
+                // Action buttons for opening overlays
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.all(UIConstants.buttonPaddingAll),
                   child: Wrap(
                     alignment: WrapAlignment.spaceEvenly,
-                    spacing: 8.0,
-                    runSpacing: 4.0,
+                    spacing: UIConstants.wrapSpacing,
+                    runSpacing: UIConstants.wrapRunSpacing,
                     children: [
                       ElevatedButton(
                         onPressed: _toggleCommanderDamage,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white.withOpacity(0.9),
-                          foregroundColor: Colors.deepPurple,
+                          backgroundColor: UIConstants.buttonBackgroundColor.withOpacity(UIConstants.buttonOpacity),
+                          foregroundColor: UIConstants.buttonForegroundColor,
                         ),
                         child: const Text('Cmdr Dmg'),
                       ),
                       ElevatedButton(
-                        onPressed: _payLife,
+                        onPressed: _toggleActions,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white.withOpacity(0.9),
-                          foregroundColor: Colors.deepPurple,
+                          backgroundColor: UIConstants.buttonBackgroundColor.withOpacity(UIConstants.buttonOpacity),
+                          foregroundColor: UIConstants.buttonForegroundColor,
                         ),
-                        child: const Text('Pay Life'),
+                        child: const Text('Actions'),
                       ),
                       ElevatedButton(
                         onPressed: _togglePlayerCounters,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white.withOpacity(0.9),
-                          foregroundColor: Colors.deepPurple,
+                          backgroundColor: UIConstants.buttonBackgroundColor.withOpacity(UIConstants.buttonOpacity),
+                          foregroundColor: UIConstants.buttonForegroundColor,
                         ),
                         child: const Text('Counters'),
                       ),
@@ -278,172 +453,83 @@ class PlayerCardState extends State<PlayerCard> {
             ),
             // Overlay: Commander Damage
             if (_showCommanderDamage)
-              Container(
-                color: Theme.of(context).cardColor.withOpacity(0.95),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final crossAxisCount = constraints.maxWidth > 350 ? 2 : 1;
-                    final rows = (4 / crossAxisCount).ceil();
-                    final itemWidth = constraints.maxWidth / crossAxisCount;
-                    final itemHeight = (constraints.maxHeight - 60) / rows;
-                    final childAspectRatio = itemWidth / itemHeight;
-
-                    return Stack(
-                      children: [
-                        GridView.count(
-                          crossAxisCount: crossAxisCount,
-                          childAspectRatio: childAspectRatio,
-                          physics: const NeverScrollableScrollPhysics(),
-                          children: allPlayers.map((fromPlayerIndex) {
-                            return Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'From P${fromPlayerIndex + 1}:',
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.remove),
-                                      iconSize: constraints.maxWidth > 300 ? 24 : 18,
-                                      onPressed: () =>
-                                          _decrementCommanderDamage(
-                                            fromPlayerIndex,
-                                          ),
-                                    ),
-                                    Text(
-                                      '${_commanderDamage[fromPlayerIndex] ?? 0}',
-                                      style: Theme.of(context).textTheme.titleMedium,
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.add),
-                                      iconSize: constraints.maxWidth > 300 ? 24 : 18,
-                                      onPressed: () =>
-                                          _incrementCommanderDamage(
-                                            fromPlayerIndex,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            );
-                          }).toList(),
-                        ),
-                        Positioned(
-                          bottom: 8,
-                          left: 0,
-                          right: 0,
-                          child: Center(
-                            child: FloatingActionButton(
-                              onPressed: _toggleCommanderDamage,
-                              backgroundColor: Colors.red,
-                              mini: true,
-                              child: const Icon(Icons.close),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
+              CounterOverlay(
+                items: [
+                  // Generate items for commander damage from each player
+                  for (int p = 0; p < 4; p++)
+                    ...List.generate(widget.allCommanderNames[p].length, (c) {
+                      final commanderName = widget.allCommanderNames[p][c];
+                      final key = '${p}_$c';
+                      return OverlayItem(
+                        label: p == widget.playerIndex ? '(you) $commanderName' : commanderName,
+                        value: _commanderDamage[key] ?? 0,
+                        onIncrement: () => _incrementCommanderDamage(p, c),
+                        onDecrement: () => _decrementCommanderDamage(p, c),
+                      );
+                    }),
+                ],
+                onClose: _toggleCommanderDamage,
+                isScrollable: true,
               ),
             // Overlay: Player Counters
             if (_showPlayerCounters)
-              Container(
-                color: Theme.of(context).cardColor.withOpacity(0.95),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final crossAxisCount = constraints.maxWidth > 350 ? 2 : 1;
-                    final rows = (playerCounterTypes.length / crossAxisCount).ceil();
-                    final itemWidth = constraints.maxWidth / crossAxisCount;
-                    final itemHeight = (constraints.maxHeight - 60) / rows;
-                    final childAspectRatio = itemWidth / itemHeight;
-
-                    return Stack(
-                      children: [
-                        GridView.count(
-                          crossAxisCount: crossAxisCount,
-                          childAspectRatio: childAspectRatio,
-                          physics: const NeverScrollableScrollPhysics(),
-                          children: playerCounterTypes.map((counterName) {
-                            return Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  counterName,
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.remove),
-                                      iconSize: constraints.maxWidth > 300 ? 24 : 18,
-                                      onPressed: () =>
-                                          _decrementPlayerCounter(
-                                            counterName,
-                                          ),
-                                    ),
-                                    Text(
-                                      '${_playerCounters[counterName] ?? 0}',
-                                      style: Theme.of(context).textTheme.titleMedium,
-                                    ),
-                                    IconButton(
-                                      icon: const Icon(Icons.add),
-                                      iconSize: constraints.maxWidth > 300 ? 24 : 18,
-                                      onPressed: () =>
-                                          _incrementPlayerCounter(
-                                            counterName,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            );
-                          }).toList(),
-                        ),
-                        Positioned(
-                          bottom: 8,
-                          left: 0,
-                          right: 0,
-                          child: Center(
-                            child: FloatingActionButton(
-                              onPressed: _togglePlayerCounters,
-                              backgroundColor: Colors.red,
-                              mini: true,
-                              child: const Icon(Icons.close),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
+              CounterOverlay(
+                items: UIConstants.playerCounterTypes.map((name) => OverlayItem(
+                  label: name,
+                  value: _playerCounters[name] ?? 0,
+                  onIncrement: () => _incrementPlayerCounter(name),
+                  onDecrement: () => _decrementPlayerCounter(name),
+                )).toList(),
+                onClose: _togglePlayerCounters,
               ),
+            // Overlay: Actions (Life Paid, Cards Milled, Extra Turns)
+            if (_showActions)
+              CounterOverlay(
+                items: [
+                  OverlayItem(
+                    label: 'Life Paid',
+                    value: _lifePaid,
+                    onIncrement: _incrementLifePaid,
+                    onDecrement: _decrementLifePaid,
+                  ),
+                  OverlayItem(
+                    label: 'Cards Milled',
+                    value: _cardsMilled,
+                    onIncrement: _incrementCardsMilled,
+                    onDecrement: _decrementCardsMilled,
+                  ),
+                  OverlayItem(
+                    label: 'Extra Turns',
+                    value: _extraTurns,
+                    onIncrement: _incrementExtraTurns,
+                    onDecrement: _decrementExtraTurns,
+                  ),
+                ],
+                onClose: _toggleActions,
+              ),
+            // Turn indicator (shown if current player's turn)
             if (widget.isCurrentTurn)
               Positioned(
-                top: 8,
+                top: UIConstants.turnCounterPositionOffset,
                 right: (widget.playerIndex == 0 || widget.playerIndex == 2)
-                    ? 8.0
+                    ? UIConstants.turnCounterPositionOffset
                     : null,
                 left: (widget.playerIndex == 1 || widget.playerIndex == 3)
-                    ? 8.0
+                    ? UIConstants.turnCounterPositionOffset
                     : null,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12.0,
-                    vertical: 6.0,
+                    horizontal: UIConstants.turnCounterPadding,
+                    vertical: UIConstants.turnCounterVerticalPadding,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12.0),
+                    color: UIConstants.turnCounterBackgroundColor,
+                    borderRadius: BorderRadius.circular(UIConstants.turnCounterBorderRadius),
                   ),
                   child: Text(
                     'Turn ${widget.turnCount}',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.deepPurple,
+                      color: UIConstants.turnCounterTextColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
