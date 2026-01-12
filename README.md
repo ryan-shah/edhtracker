@@ -5,7 +5,11 @@ A simple and effective life tracker for four-player games of Magic: The Gatherin
 ## Features
 
 *   **Game Setup:** Configure commander names, starting life total, and the first player before the game begins.
-*   **Life Tracking:** Tracks life totals for four players.
+*   **Commander Autocomplete:** Search for commanders by name with autocomplete suggestions powered by Scryfall API.
+*   **Partner Commanders:** Support for partner commanders - select up to two commanders per player.
+*   **Unconventional Commanders:** Optional toggle to remove "is:commander" and "is:partner" filters for searching non-traditional commanders.
+*   **Commander Art Display:** Each player's commander art is automatically fetched from Scryfall and displayed on their card with caching for offline access.
+*   **Life Tracking:** Tracks life totals for four players with easy increment/decrement controls.
 *   **Commander Damage:** Tracks commander damage from each player.
 *   **Player Counters:** Tracks common player counters like Energy, Experience, Poison, and Rad.
 *   **Turn Counter:** A clear turn counter is displayed on the current player's card.
@@ -26,3 +30,9 @@ This project is a Flutter application. To run it, you'll need to have the Flutte
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+
+## Dependencies
+
+*   **flutter_typeahead:** Provides autocomplete suggestions for commander search.
+*   **http:** Handles API requests to the Scryfall database.
+*   **shared_preferences:** Caches commander art images for offline access.
