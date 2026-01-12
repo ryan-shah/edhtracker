@@ -1,6 +1,7 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'commander_autocomplete.dart';
+import 'help_page.dart';
 import 'life_tracker_page.dart';
 import 'utils.dart';
 import 'scryfall_service.dart';
@@ -146,7 +147,21 @@ class _GameSetupPageState extends State<GameSetupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Game Setup'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('Game Setup'),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HelpPage()),
+              );
+            },
+          ),
+        ],
+      ),
       body: Stack(
         children: [
           Center(
@@ -160,13 +175,6 @@ class _GameSetupPageState extends State<GameSetupPage> {
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        Tooltip(
-                          message: 'Removes "is:commander" and "is:partner" filters from search',
-                          child: IconButton(
-                            icon: const Icon(Icons.help_outline),
-                            onPressed: () {},
-                          ),
-                        ),
                         Expanded(
                           child: SwitchListTile(
                             contentPadding: EdgeInsets.zero,
