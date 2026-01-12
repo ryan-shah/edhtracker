@@ -7,6 +7,7 @@ class LifeTrackerPage extends StatefulWidget {
   final List<List<String>> playerArtUrls;
   final int startingLife;
   final int startingPlayerIndex;
+  final bool unconventionalCommanders;
 
   const LifeTrackerPage({
     super.key,
@@ -14,6 +15,7 @@ class LifeTrackerPage extends StatefulWidget {
     required this.playerArtUrls,
     required this.startingLife,
     required this.startingPlayerIndex,
+    this.unconventionalCommanders = false,
   });
 
   @override
@@ -80,6 +82,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                       initialPlayerNames: initialPlayerNames,
                       initialPartnerNames: initialPartnerNames,
                       initialHasPartner: initialHasPartner,
+                      initialUnconventionalCommanders: widget.unconventionalCommanders,
                     ),
                   ),
                   (route) => false,

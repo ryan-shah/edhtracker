@@ -65,7 +65,7 @@ class ScryfallService {
 
   static Future<void> _throttleRequests() async {
     // Ensure cache is loaded before any requests that might use it
-    await _initCache(); 
+    await _initCache();
 
     if (_lastRequestTime != null) {
       final now = DateTime.now();
@@ -78,22 +78,28 @@ class ScryfallService {
     _lastRequestTime = DateTime.now();
   }
 
-  static Future<List<String>> searchCards(String pattern, {bool isPartner = false, int retryCount = 0}) async {
+  static Future<List<String>> searchCards(String pattern, {bool isPartner = false, int retryCount = 0, bool unconventionalCommanders = false}) async {
     if (pattern.length < 3) {
       return Future.value([]);
     }
 
     await _throttleRequests();
 
-    String query = 'name:"$pattern" is:commander';
-    if (isPartner) {
-      query += ' is:partner';
+    Uri uri;
+    if (unconventionalCommanders) {
+      uri = Uri.https('api.scryfall.com', '/cards/autocomplete', {
+        'q': pattern,
+      });
+    } else {
+      String query = 'name:"$pattern" is:commander';
+      if (isPartner) {
+        query += ' is:partner';
+      }
+      uri = Uri.https('api.scryfall.com', '/cards/search', {
+        'q': query,
+        'order': 'edhrec',
+      });
     }
-
-    final uri = Uri.https('api.scryfall.com', '/cards/search', {
-      'q': query,
-      'order': 'edhrec',
-    });
 
     final response = await http.get(
       uri,
@@ -105,13 +111,23 @@ class ScryfallService {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      if (data['object'] == 'list' && data['data'] != null) {
-        final cards = data['data'] as List;
-        return cards.map((card) => card['name'] as String).toList();
+      if (data['data'] != null && data['data'] is List) {
+        if (unconventionalCommanders) {
+          // Response from /autocomplete is a 'catalog' object with a list of strings
+          if (data['object'] == 'catalog') {
+            return (data['data'] as List).map((name) => name as String).toList();
+          }
+        } else {
+          // Response from /search is a 'list' object with a list of card objects
+          if (data['object'] == 'list') {
+            final cards = data['data'] as List;
+            return cards.map((card) => card['name'] as String).toList();
+          }
+        }
       }
     } else if (response.statusCode == 429 && retryCount < 1) {
       await Future.delayed(_retryDelay);
-      return searchCards(pattern, isPartner: isPartner, retryCount: retryCount + 1);
+      return searchCards(pattern, isPartner: isPartner, retryCount: retryCount + 1, unconventionalCommanders: unconventionalCommanders);
     }
     return [];
   }

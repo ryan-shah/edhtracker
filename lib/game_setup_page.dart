@@ -9,12 +9,14 @@ class GameSetupPage extends StatefulWidget {
   final List<String>? initialPlayerNames;
   final List<String>? initialPartnerNames;
   final List<bool>? initialHasPartner;
+  final bool? initialUnconventionalCommanders;
 
   const GameSetupPage({
     super.key,
     this.initialPlayerNames,
     this.initialPartnerNames,
     this.initialHasPartner,
+    this.initialUnconventionalCommanders,
   });
 
   @override
@@ -28,6 +30,7 @@ class _GameSetupPageState extends State<GameSetupPage> {
   int _startingLife = 40;
   int _startingPlayerIndex = -1;
   bool _isLoading = false;
+  bool _unconventionalCommanders = false;
 
   @override
   void initState() {
@@ -42,6 +45,7 @@ class _GameSetupPageState extends State<GameSetupPage> {
         _partnerNames[i].text = widget.initialPartnerNames![i];
         _hasPartner[i] = widget.initialHasPartner![i];
       }
+      _unconventionalCommanders = widget.initialUnconventionalCommanders ?? false;
     }
 
     for (var controller in _playerNames) {
@@ -112,6 +116,7 @@ class _GameSetupPageState extends State<GameSetupPage> {
           playerArtUrls: playerArtUrls,
           startingLife: startingLife,
           startingPlayerIndex: startingPlayerIndex,
+          unconventionalCommanders: _unconventionalCommanders,
         ),
       ),
     );
@@ -145,6 +150,30 @@ class _GameSetupPageState extends State<GameSetupPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Tooltip(
+                          message: 'Removes "is:commander" and "is:partner" filters from search',
+                          child: IconButton(
+                            icon: const Icon(Icons.help_outline),
+                            onPressed: () {},
+                          ),
+                        ),
+                        Expanded(
+                          child: SwitchListTile(
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text('Unconventional Commanders'),
+                            value: _unconventionalCommanders,
+                            onChanged: (value) {
+                              setState(() {
+                                _unconventionalCommanders = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                     ...List.generate(4, (i) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -156,6 +185,7 @@ class _GameSetupPageState extends State<GameSetupPage> {
                                   child: CommanderAutocomplete(
                                     controller: _playerNames[i],
                                     labelText: 'Player ${i + 1} Commander',
+                                    unconventionalCommanders: _unconventionalCommanders,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -181,6 +211,7 @@ class _GameSetupPageState extends State<GameSetupPage> {
                                 controller: _partnerNames[i],
                                 labelText: 'Partner Commander',
                                 isPartner: true,
+                                unconventionalCommanders: _unconventionalCommanders,
                               ),
                             ]
                           ],
