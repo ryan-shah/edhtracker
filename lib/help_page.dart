@@ -71,6 +71,40 @@ class HelpPage extends StatelessWidget {
                     ),
                   ]),
                   const SizedBox(height: 24),
+                  _buildSectionTitle(context, 'Main Menu'),
+                  _buildSection(context, [
+                    _buildToolSection(
+                      context,
+                      'Help (Top)',
+                      'Opens this help page to guide you through the application\'s features.',
+                      Icons.help_outline,
+                    ),
+                    _buildToolSection(
+                      context,
+                      'New Game (Right)',
+                      'Resets the match. You can choose to start a new game with the same players/commanders or clear everything to start fresh.',
+                      Icons.restart_alt,
+                    ),
+                    _buildToolSection(
+                      context,
+                      'Complete Game (Bottom)',
+                      'Finalizes the current match. (Functionality coming soon).',
+                      Icons.check_circle_outline,
+                    ),
+                    _buildToolSection(
+                      context,
+                      'Close Menu (Left)',
+                      'Hides the expanded menu options.',
+                      Icons.close,
+                    ),
+                    _buildToolSection(
+                      context,
+                      'Menu Toggle (Center)',
+                      'Taps to expand or collapse the central control menu.',
+                      Icons.menu,
+                    ),
+                  ]),
+                  const SizedBox(height: 24),
                   _buildSectionTitle(context, 'Tracking Tools'),
                   _buildSection(context, [
                     _buildToolSection(
@@ -97,6 +131,7 @@ class HelpPage extends StatelessWidget {
                       '• Life Paid: Tracks life points paid for effects (e.g., Necropotence, Phyrexian mana).\n'
                       '• Cards Milled: Counts the number of cards milled from libraries.\n'
                       '• Extra Turns: Tracks extra turns taken by the player.\n'
+                      '• Cards Drawn: Tracks the number of cards drawn by the player. Auto increments on turn start.\n'
                       'Tap the "Actions" button to open an overlay and manage these counters.',
                       Icons.track_changes,
                     ),

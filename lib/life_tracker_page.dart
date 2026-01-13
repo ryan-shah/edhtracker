@@ -144,8 +144,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
       }
       final bool isNewTurn = _currentPlayerIndex == widget.startingPlayerIndex;
       // Decrement cardsDrawn for the previous player *before* changing _currentPlayerIndex
-      final previousPlayerIndex = (_currentPlayerIndex - 1 + 4) % 4;
-      _playerCardKeys[previousPlayerIndex].currentState?.decrementCardsDrawn();
+      _playerCardKeys[_currentPlayerIndex].currentState?.decrementCardsDrawn();
 
       _currentPlayerIndex = (_currentPlayerIndex - 1 + 4) % 4;
       if (isNewTurn) {
@@ -290,7 +289,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                               setState(() => _menuOpen = false);
                               _showResetDialog();
                             },
-                            child: const Icon(Icons.play_arrow),
+                            child: const Icon(Icons.restart_alt),
                           ),
                         ),
                       ),
