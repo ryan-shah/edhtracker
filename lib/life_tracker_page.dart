@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'player_card.dart';
+
 import 'game_setup_page.dart';
 import 'help_page.dart';
+import 'player_card.dart';
 
 class LifeTrackerPage extends StatefulWidget {
   final List<String> playerNames;
@@ -33,13 +34,17 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
   late int _currentPlayerIndex;
   int _turnCount = 1;
   bool _menuOpen = false;
-  
+
   static const double _menuOffset = 100.0; // Fixed offset from center
 
   @override
   void initState() {
     super.initState();
     _currentPlayerIndex = widget.startingPlayerIndex;
+    // Increment cardsDrawn for the starting player and then trigger a state update
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _playerCardKeys[_currentPlayerIndex].currentState?.incrementCardsDrawn();
+    });
   }
 
   void _showResetDialog() {
@@ -89,7 +94,8 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                       initialPlayerNames: initialPlayerNames,
                       initialPartnerNames: initialPartnerNames,
                       initialHasPartner: initialHasPartner,
-                      initialUnconventionalCommanders: widget.unconventionalCommanders,
+                      initialUnconventionalCommanders:
+                          widget.unconventionalCommanders,
                     ),
                   ),
                   (route) => false,
@@ -125,15 +131,22 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
       if (_currentPlayerIndex == widget.startingPlayerIndex) {
         _turnCount++;
       }
+      // Increment cardsDrawn for the next player
+      _playerCardKeys[_currentPlayerIndex].currentState?.incrementCardsDrawn();
     });
   }
 
   void _previousTurn() {
     setState(() {
-      if (_turnCount == 1 && _currentPlayerIndex == widget.startingPlayerIndex) {
+      if (_turnCount == 1 &&
+          _currentPlayerIndex == widget.startingPlayerIndex) {
         return;
       }
       final bool isNewTurn = _currentPlayerIndex == widget.startingPlayerIndex;
+      // Decrement cardsDrawn for the previous player *before* changing _currentPlayerIndex
+      final previousPlayerIndex = (_currentPlayerIndex - 1 + 4) % 4;
+      _playerCardKeys[previousPlayerIndex].currentState?.decrementCardsDrawn();
+
       _currentPlayerIndex = (_currentPlayerIndex - 1 + 4) % 4;
       if (isNewTurn) {
         _turnCount--;
@@ -147,7 +160,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           final isPortrait = constraints.maxHeight > constraints.maxWidth;
-          
+
           final playerCardsWidget = Column(
             children: [
               Expanded(
@@ -227,9 +240,9 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
             ],
           );
 
-          final lifeTrackerWidget = isPortrait 
-            ? RotatedBox(quarterTurns: 1, child: playerCardsWidget)
-            : playerCardsWidget;
+          final lifeTrackerWidget = isPortrait
+              ? RotatedBox(quarterTurns: 1, child: playerCardsWidget)
+              : playerCardsWidget;
 
           // Calculate center of screen and offset by fixed amount
           final centerX = constraints.maxWidth / 2;
