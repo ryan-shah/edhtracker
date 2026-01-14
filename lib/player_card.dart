@@ -83,6 +83,9 @@ class PlayerCardState extends State<PlayerCard> {
   /// Whether the actions overlay is currently visible
   bool _showActions = false;
 
+  /// Whether the player is currently shown as eliminated
+  bool _isEliminated = false;
+
   // ============================================================================
   // Action Trackers
   // ============================================================================
@@ -115,6 +118,7 @@ class PlayerCardState extends State<PlayerCard> {
       _showCommanderDamage = false;
       _showPlayerCounters = false;
       _showActions = false;
+      _isEliminated = false;
       _lifePaid = 0;
       _cardsMilled = 0;
       _extraTurns = 0;
@@ -136,6 +140,9 @@ class PlayerCardState extends State<PlayerCard> {
   void _decrementLife() {
     setState(() {
       _life--;
+      if (_life == 0) {
+        _isEliminated = true;
+      }
     });
   }
 
@@ -148,6 +155,9 @@ class PlayerCardState extends State<PlayerCard> {
     setState(() {
       _lifePaid++;
       _life--;
+      if (_life == 0) {
+        _isEliminated = true;
+      }
     });
   }
 
@@ -235,6 +245,9 @@ class PlayerCardState extends State<PlayerCard> {
     setState(() {
       _commanderDamage.update(key, (value) => value + 1, ifAbsent: () => 1);
       _life--;
+      if (_life == 0 || _commanderDamage[key]! >= 21) {
+        _isEliminated = true;
+      }
     });
   }
 
@@ -555,6 +568,48 @@ class PlayerCardState extends State<PlayerCard> {
                     ),
                   ],
                   onClose: _toggleActions,
+                ),
+              ),
+            // Elimination Overlay
+            if (_isEliminated)
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _isEliminated = false;
+                    });
+                  },
+                  child: Container(
+                    color: Colors.black.withOpacity(0.7),
+                    child: const Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.person_off,
+                          color: Colors.white,
+                          size: 64,
+                        ),
+                        SizedBox(height: 8),
+                        Text(
+                          'ELIMINATED',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 2,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          'Tap to Dismiss',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             // Turn indicator (shown if current player's turn)
