@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'constants.dart';
 
 /// Help page that explains the functionality of the EDH Tracker application.
-/// 
+///
 /// Provides detailed information about:
 /// - Game Setup page features and options
 /// - Life Tracker page controls and interactions
@@ -62,8 +62,12 @@ class HelpPage extends StatelessWidget {
                       'The current player\'s card will have a blue border and display "Turn X" in the corner, where X is the current turn number.',
                     ),
                     _buildSectionContent(
-                      'Advancing Turns',
-                      'Tap any player card to advance to the next player\'s turn. Long-press a card to go back to the previous player\'s turn.',
+                      'Turn Timer',
+                      'The active player\'s card displays a timer tracking the duration of their turn. This helps monitor game pace and can be toggled on or off from the main menu.',
+                    ),
+                    _buildSectionContent(
+                      'Advancing & Undoing Turns',
+                      'Tap any player card to advance to the next player\'s turn. Long-press any player card to undo the last turn progression and revert the game state to the beginning of the current turn.',
                     ),
                     _buildSectionContent(
                       'Commander Art Display',
@@ -87,15 +91,9 @@ class HelpPage extends StatelessWidget {
                     ),
                     _buildToolSection(
                       context,
-                      'Complete Game (Bottom)',
-                      'Finalizes the current match. (Functionality coming soon).',
-                      Icons.check_circle_outline,
-                    ),
-                    _buildToolSection(
-                      context,
-                      'Close Menu (Left)',
-                      'Hides the expanded menu options.',
-                      Icons.close,
+                      'Toggle Timer (Left)',
+                      'Toggles the visibility of the turn timer on the active player\'s card.',
+                      Icons.timer,
                     ),
                     _buildToolSection(
                       context,
@@ -110,29 +108,23 @@ class HelpPage extends StatelessWidget {
                     _buildToolSection(
                       context,
                       'Cmdr Dmg (Commander Damage)',
-                      'Track damage dealt by each opponent\'s commander. '
-                      'Tap the "Cmdr Dmg" button to open an overlay showing damage from each player\'s commander(s). '
-                      'Use the + and - buttons to adjust damage. '
-                      'Note: In regular EDH, 21 commander damage from a single commander causes that player to lose.',
+                      'Track damage dealt by each opponent\'s commander. Tap the "Cmdr Dmg" button to open an overlay. Note: In regular EDH, 21 commander damage from a single commander causes that player to lose.',
                       Icons.shield,
                     ),
                     _buildToolSection(
                       context,
                       'Counters',
-                      'Track player counters such as Energy, Experience, Poison, and Rad. '
-                      'Tap the "Counters" button to open an overlay where you can increment or decrement each counter type. '
-                      'These counters are useful for tracking various card mechanics and effects.',
+                      'Track player counters such as Energy, Experience, Poison, and Rad. Tap the "Counters" button to open an overlay where you can increment or decrement each counter type.',
                       Icons.assessment,
                     ),
                     _buildToolSection(
                       context,
                       'Actions',
-                      'Track important game actions and events:\n'
+                      'Track important game actions and events:\n' 
                       '• Life Paid: Tracks life points paid for effects (e.g., Necropotence, Phyrexian mana).\n'
                       '• Cards Milled: Counts the number of cards milled from libraries.\n'
                       '• Extra Turns: Tracks extra turns taken by the player.\n'
-                      '• Cards Drawn: Tracks the number of cards drawn by the player. Auto increments on turn start.\n'
-                      'Tap the "Actions" button to open an overlay and manage these counters.',
+                      '• Cards Drawn: Tracks the number of cards drawn. This counter automatically increments by one at the start of each player\'s turn.',
                       Icons.track_changes,
                     ),
                   ]),
@@ -141,7 +133,11 @@ class HelpPage extends StatelessWidget {
                   _buildSection(context, [
                     _buildTipContent(
                       'Quick Navigation',
-                      'Use tap to advance turns and long-press to go back. This is faster than using an app menu.',
+                      'Use a single tap on any player card to advance turns and a long-press to undo the last turn. This is faster than using an app menu.',
+                    ),
+                    _buildTipContent(
+                      'Undo Functionality',
+                      'The undo feature reverts all game state changes from the current turn, including life totals, counter values, and turn progression. Use it to correct mistakes quickly.',
                     ),
                     _buildTipContent(
                       'Overlay Management',
@@ -152,16 +148,8 @@ class HelpPage extends StatelessWidget {
                       'When you tap the + button in the "Life Paid" overlay, it both increments the life paid counter and decrements your actual life total.',
                     ),
                     _buildTipContent(
-                      'Commander Damage Tracking',
-                      'Each commander is tracked separately. If a player has a partner commander, both will appear in the commander damage list.',
-                    ),
-                    _buildTipContent(
                       'Screen Orientation',
                       'The app is locked in landscape mode for easy viewing when placed on a table during gameplay.',
-                    ),
-                    _buildTipContent(
-                      'Starting New Game',
-                      'From the Life Tracker page, use the reset button to return to the setup screen and configure a new game.',
                     ),
                   ]),
                   const SizedBox(height: 24),
