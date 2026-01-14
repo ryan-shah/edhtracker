@@ -1,5 +1,7 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
+
 import 'player_card.dart';
 
 /// Represents the initial setup of a game session.
@@ -11,6 +13,7 @@ class GameSession {
   final int startingPlayerIndex;
   final bool unconventionalCommanders;
   final DateTime startTime;
+  DateTime? endTime; // Added endTime
 
   GameSession({
     required this.playerNames,
@@ -20,10 +23,11 @@ class GameSession {
     required this.startingPlayerIndex,
     required this.unconventionalCommanders,
     required this.startTime,
+    this.endTime, // Initialize endTime to null
   });
 
   Map<String, dynamic> toJson() {
-    return {
+    final Map<String, dynamic> json = {
       'start_time': startTime.toIso8601String(),
       'starting_life': startingLife,
       'players': List.generate(playerNames.length, (index) {
@@ -34,6 +38,10 @@ class GameSession {
         };
       }),
     };
+    if (endTime != null) {
+      json['end_time'] = endTime!.toIso8601String();
+    }
+    return json;
   }
 }
 
@@ -82,8 +90,9 @@ class PlayerStateSnapshot {
       'life': life,
       'counters': counters,
       'action_trackers': actionTrackers,
-      'commander_damage_taken':
-          commanderDamageTaken.map((e) => e.toJson()).toList(),
+      'commander_damage_taken': commanderDamageTaken
+          .map((e) => e.toJson())
+          .toList(),
       'is_eliminated': isEliminated,
     };
   }
@@ -123,18 +132,22 @@ class GameLogger {
     required int startingPlayerIndex,
     required bool unconventionalCommanders,
   }) : _session = GameSession(
-          playerNames: playerNames,
-          playerCommanderNames: playerCommanderNames,
-          playerArtUrls: playerArtUrls,
-          startingLife: startingLife,
-          startingPlayerIndex: startingPlayerIndex,
-          unconventionalCommanders: unconventionalCommanders,
-          startTime: DateTime.now(),
-        );
+         playerNames: playerNames,
+         playerCommanderNames: playerCommanderNames,
+         playerArtUrls: playerArtUrls,
+         startingLife: startingLife,
+         startingPlayerIndex: startingPlayerIndex,
+         unconventionalCommanders: unconventionalCommanders,
+         startTime: DateTime.now(),
+         endTime: null, // Initialize endTime to null
+       );
 
   /// Records the state of all players at the end of a turn.
-  void recordTurn(int activePlayerIndex, int turnNumber,
-      List<GlobalKey<PlayerCardState>> playerCardKeys) {
+  void recordTurn(
+    int activePlayerIndex,
+    int turnNumber,
+    List<GlobalKey<PlayerCardState>> playerCardKeys,
+  ) {
     final playerStates = <PlayerStateSnapshot>[];
     for (int i = 0; i < playerCardKeys.length; i++) {
       final playerCardState = playerCardKeys[i].currentState;
@@ -149,6 +162,11 @@ class GameLogger {
         playerStates: playerStates,
       ),
     );
+  }
+
+  /// Sets the end time of the game.
+  void endGame() {
+    _session.endTime = DateTime.now();
   }
 
   /// Removes the last turn entry and returns the state of the previous turn.

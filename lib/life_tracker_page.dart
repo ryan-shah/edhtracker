@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'game_logger.dart'; // Import the new game logger
 import 'game_setup_page.dart';
 import 'help_page.dart';
 import 'player_card.dart';
-import 'game_logger.dart'; // Import the new game logger
 
 class LifeTrackerPage extends StatefulWidget {
   final List<String> playerNames;
@@ -56,8 +56,6 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
     // Increment cardsDrawn for the starting player and then trigger a state update
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _playerCardKeys[_currentPlayerIndex].currentState?.incrementCardsDrawn();
-      // Record the initial state after card draw
-      _gameLogger.recordTurn(_currentPlayerIndex, _turnCount, _playerCardKeys);
     });
   }
 
@@ -168,7 +166,6 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
       if (previousTurnEntry != null) {
         _currentPlayerIndex = previousTurnEntry.activePlayerIndex;
         _turnCount = previousTurnEntry.turnNumber;
-
       } else {
         // This case should ideally not be reached if the initial check is correct
         // but as a fallback, we can reset to the very first state if needed.
@@ -328,9 +325,8 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                             heroTag: 'complete_game_button',
                             mini: true,
                             onPressed: () {
-                              // TODO: Implement complete game functionality
                               setState(() => _menuOpen = false);
-                              // For testing: print the game log JSON
+                              _gameLogger.endGame(); // Call endGame method
                               _gameLogger.logData();
                             },
                             child: const Icon(Icons.check_circle_outline),
