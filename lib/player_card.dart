@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'constants.dart';
 import 'counter_overlay.dart';
 import 'utils.dart';
+import 'game_logger.dart'; // Import the new game logger
 
 /// Stateless widget that represents the configuration for a player card.
 ///
@@ -126,6 +127,7 @@ class PlayerCardState extends State<PlayerCard> {
       _lifePaid = 0;
       _cardsMilled = 0;
       _extraTurns = 0;
+      _cardsDrawn = 0;
     });
   }
 
@@ -327,6 +329,35 @@ class PlayerCardState extends State<PlayerCard> {
         );
       }
     });
+  }
+
+  /// Returns a snapshot of the current player's state.
+  PlayerStateSnapshot getCurrentState() {
+    final List<CommanderDamageTaken> commanderDamageList = [];
+    _commanderDamage.forEach((key, value) {
+      final parts = key.split('_');
+      commanderDamageList.add(
+        CommanderDamageTaken(
+          sourcePlayerIndex: int.parse(parts[0]),
+          commanderName: widget.allCommanderNames[int.parse(parts[0])][int.parse(parts[1])],
+          damage: value,
+        ),
+      );
+    });
+
+    return PlayerStateSnapshot(
+      playerIndex: widget.playerIndex,
+      life: _life,
+      counters: Map.from(_playerCounters), // Create a copy
+      actionTrackers: {
+        'life_paid': _lifePaid,
+        'cards_milled': _cardsMilled,
+        'extra_turns': _extraTurns,
+        'cards_drawn': _cardsDrawn,
+      },
+      commanderDamageTaken: commanderDamageList,
+      isEliminated: _isEliminated,
+    );
   }
 
   @override
@@ -634,7 +665,7 @@ class PlayerCardState extends State<PlayerCard> {
                             color: Colors.white70,
                             fontSize: 12,
                           ),
-                        ),
+                          ),
                       ],
                     ),
                   ),

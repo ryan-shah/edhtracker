@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'game_setup_page.dart';
 import 'help_page.dart';
 import 'player_card.dart';
+import 'game_logger.dart'; // Import the new game logger
 
 class LifeTrackerPage extends StatefulWidget {
   final List<String> playerNames;
@@ -34,6 +35,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
   late int _currentPlayerIndex;
   int _turnCount = 1;
   bool _menuOpen = false;
+  late GameLogger _gameLogger; // Declare GameLogger instance
 
   static const double _menuOffset = 100.0; // Fixed offset from center
 
@@ -41,9 +43,21 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
   void initState() {
     super.initState();
     _currentPlayerIndex = widget.startingPlayerIndex;
+
+    _gameLogger = GameLogger(
+      playerNames: widget.playerNames,
+      playerCommanderNames: widget.playerCommanderNames,
+      playerArtUrls: widget.playerArtUrls,
+      startingLife: widget.startingLife,
+      startingPlayerIndex: widget.startingPlayerIndex,
+      unconventionalCommanders: widget.unconventionalCommanders,
+    );
+
     // Increment cardsDrawn for the starting player and then trigger a state update
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _playerCardKeys[_currentPlayerIndex].currentState?.incrementCardsDrawn();
+      // Record the initial state after card draw
+      _gameLogger.recordTurn(_currentPlayerIndex, _turnCount, _playerCardKeys);
     });
   }
 
@@ -127,6 +141,9 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
 
   void _nextTurn() {
     setState(() {
+      // Record the state *before* advancing the turn
+      _gameLogger.recordTurn(_currentPlayerIndex, _turnCount, _playerCardKeys);
+
       _currentPlayerIndex = (_currentPlayerIndex + 1) % 4;
       if (_currentPlayerIndex == widget.startingPlayerIndex) {
         _turnCount++;
@@ -140,15 +157,22 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
     setState(() {
       if (_turnCount == 1 &&
           _currentPlayerIndex == widget.startingPlayerIndex) {
+        // Cannot go back before the very first turn
         return;
       }
-      final bool isNewTurn = _currentPlayerIndex == widget.startingPlayerIndex;
-      // Decrement cardsDrawn for the previous player *before* changing _currentPlayerIndex
+
+      // Decrement cardsDrawn for the current player before restoring previous state
       _playerCardKeys[_currentPlayerIndex].currentState?.decrementCardsDrawn();
 
-      _currentPlayerIndex = (_currentPlayerIndex - 1 + 4) % 4;
-      if (isNewTurn) {
-        _turnCount--;
+      final previousTurnEntry = _gameLogger.goToPreviousTurn();
+      if (previousTurnEntry != null) {
+        _currentPlayerIndex = previousTurnEntry.activePlayerIndex;
+        _turnCount = previousTurnEntry.turnNumber;
+
+      } else {
+        // This case should ideally not be reached if the initial check is correct
+        // but as a fallback, we can reset to the very first state if needed.
+        // For now, it will simply prevent further action if there's no previous state.
       }
     });
   }
@@ -306,6 +330,8 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                             onPressed: () {
                               // TODO: Implement complete game functionality
                               setState(() => _menuOpen = false);
+                              // For testing: print the game log JSON
+                              _gameLogger.logData();
                             },
                             child: const Icon(Icons.check_circle_outline),
                           ),
