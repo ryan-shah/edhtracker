@@ -172,10 +172,7 @@ class GameLogger {
   /// Removes the last turn entry and returns the state of the previous turn.
   /// If no turns are left, returns null.
   TurnLogEntry? goToPreviousTurn() {
-    if (_turnLog.isNotEmpty) {
-      _turnLog.removeLast();
-    }
-    return _turnLog.isNotEmpty ? _turnLog.last : null;
+    return _turnLog.isNotEmpty ? _turnLog.removeLast() : null;
   }
 
   /// Outputs the entire game log as a JSON string.
@@ -194,5 +191,9 @@ class GameLogger {
     for (final turn in _turnLog) {
       print(turn.toJson());
     }
+  }
+
+  void logLastTurn() {
+    print(_turnLog.last.toJson());
   }
 }

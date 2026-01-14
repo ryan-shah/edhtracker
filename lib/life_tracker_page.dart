@@ -141,6 +141,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
     setState(() {
       // Record the state *before* advancing the turn
       _gameLogger.recordTurn(_currentPlayerIndex, _turnCount, _playerCardKeys);
+      _gameLogger.logLastTurn();
 
       _currentPlayerIndex = (_currentPlayerIndex + 1) % 4;
       if (_currentPlayerIndex == widget.startingPlayerIndex) {
