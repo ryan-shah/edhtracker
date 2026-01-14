@@ -36,6 +36,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
   late int _currentPlayerIndex;
   int _turnCount = 1;
   bool _menuOpen = false;
+  bool _showTimer = false;
   late GameLogger _gameLogger; // Declare GameLogger instance
 
   // Turn tracking for timer
@@ -82,6 +83,13 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
         });
       }
     });
+  }
+
+  void _toggleTurnTimer() {
+    setState(() => _showTimer = !_showTimer);
+    for (int i = 0; i < 4; i++) {
+      _playerCardKeys[i].currentState?.toggleTurnTimer();
+    }
   }
 
   void _showResetDialog() {
@@ -388,12 +396,10 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                         bottom: 0,
                         child: Center(
                           child: FloatingActionButton(
-                            heroTag: 'close_menu_button',
+                            heroTag: 'timer_button',
                             mini: true,
-                            onPressed: () {
-                              setState(() => _menuOpen = false);
-                            },
-                            child: const Icon(Icons.close),
+                            onPressed: _toggleTurnTimer,
+                            child: _showTimer ? const Icon(Icons.timer_outlined) : const Icon(Icons.timer_off_outlined),
                           ),
                         ),
                       ),

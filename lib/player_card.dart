@@ -94,6 +94,9 @@ class PlayerCardState extends State<PlayerCard> {
   /// Whether the player has dismissed the elimination overlay at least once
   bool _hasDismissedElimination = false;
 
+  /// Whether to show the turn timer
+  bool _showTimer = false;
+
   // ============================================================================
   // Action Trackers
   // ============================================================================
@@ -307,6 +310,13 @@ class PlayerCardState extends State<PlayerCard> {
       _showActions = !_showActions;
       _showCommanderDamage = false;
       _showPlayerCounters = false;
+    });
+  }
+
+  /// Toggles the visibility of the turn timer
+  void toggleTurnTimer() {
+    setState(() {
+      _showTimer = !_showTimer;
     });
   }
 
@@ -717,26 +727,28 @@ class PlayerCardState extends State<PlayerCard> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: UIConstants.turnCounterPadding,
-                        vertical: UIConstants.turnTimerVerticalPadding,
-                      ),
-                      decoration: BoxDecoration(
-                        color: UIConstants.turnCounterBackgroundColor,
-                        borderRadius: BorderRadius.circular(
-                          UIConstants.turnCounterBorderRadius,
+                    if (_showTimer) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: UIConstants.turnCounterPadding,
+                          vertical: UIConstants.turnTimerVerticalPadding,
+                        ),
+                        decoration: BoxDecoration(
+                          color: UIConstants.turnCounterBackgroundColor,
+                          borderRadius: BorderRadius.circular(
+                            UIConstants.turnCounterBorderRadius,
+                          ),
+                        ),
+                        child: Text(
+                          formatDuration(widget.currentTurnDuration),
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: UIConstants.turnCounterTextColor,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                      child: Text(
-                        formatDuration(widget.currentTurnDuration),
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: UIConstants.turnCounterTextColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                    ],
                   ],
                 ),
               ),
