@@ -84,7 +84,7 @@ class _GameSetupPageState extends State<GameSetupPage> {
       final currentCommanderNames = <String>[];
 
       if (_hasPartner[i] && primary.isNotEmpty && partner.isNotEmpty) {
-        playerNames.add('$primary // $partner');
+        playerNames.add('$primary || $partner');
         currentCommanderNames.addAll([primary, partner]);
         final primaryArt = await ScryfallService.getCardArtUrl(primary);
         final partnerArt = await ScryfallService.getCardArtUrl(partner);

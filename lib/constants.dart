@@ -21,12 +21,9 @@ class UIConstants {
   
   /// Minimum width threshold for showing 2-column layout (otherwise 1 column)
   static const double overlayMinCrossAxisCount = 350;
-  
-  /// Default height for items in scrollable overlays
-  static const double defaultScrollableItemHeight = 100.0;
-  
-  /// Default height for items in non-scrollable overlays
-  static const double defaultNonScrollableItemHeight = 120.0;
+
+  /// Default height for items in overlays
+  static const double defaultOverlayItemHeight = 100.0;
   
   /// Bottom padding to reserve space for the close button
   static const double overlayPaddingBottom = 60.0;

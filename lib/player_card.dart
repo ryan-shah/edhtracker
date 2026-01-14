@@ -485,71 +485,77 @@ class PlayerCardState extends State<PlayerCard> {
             ),
             // Overlay: Commander Damage
             if (_showCommanderDamage)
-              CounterOverlay(
-                items: [
-                  // Generate items for commander damage from each player
-                  for (int p = 0; p < 4; p++)
-                    ...List.generate(widget.allCommanderNames[p].length, (c) {
-                      final commanderName = widget.allCommanderNames[p][c];
-                      final key = '${p}_$c';
-                      return OverlayItem(
-                        label: p == widget.playerIndex
-                            ? '(you) $commanderName'
-                            : commanderName,
-                        value: _commanderDamage[key] ?? 0,
-                        onIncrement: () => _incrementCommanderDamage(p, c),
-                        onDecrement: () => _decrementCommanderDamage(p, c),
-                      );
-                    }),
-                ],
-                onClose: _toggleCommanderDamage,
-                isScrollable: true,
+              Positioned.fill(
+                child: CounterOverlay(
+                  items: [
+                    // Generate items for commander damage from each player
+                    for (int p = 0; p < 4; p++)
+                      ...List.generate(widget.allCommanderNames[p].length, (c) {
+                        final commanderName = widget.allCommanderNames[p][c];
+                        final key = '${p}_$c';
+                        return OverlayItem(
+                          label: p == widget.playerIndex
+                              ? '(you) $commanderName'
+                              : commanderName,
+                          value: _commanderDamage[key] ?? 0,
+                          onIncrement: () => _incrementCommanderDamage(p, c),
+                          onDecrement: () => _decrementCommanderDamage(p, c),
+                        );
+                      }),
+                  ],
+                  onClose: _toggleCommanderDamage,
+                  isScrollable: true,
+                ),
               ),
             // Overlay: Player Counters
             if (_showPlayerCounters)
-              CounterOverlay(
-                items: UIConstants.playerCounterTypes
-                    .map(
-                      (name) => OverlayItem(
-                        label: name,
-                        value: _playerCounters[name] ?? 0,
-                        onIncrement: () => _incrementPlayerCounter(name),
-                        onDecrement: () => _decrementPlayerCounter(name),
-                      ),
-                    )
-                    .toList(),
-                onClose: _togglePlayerCounters,
+              Positioned.fill(
+                child: CounterOverlay(
+                  items: UIConstants.playerCounterTypes
+                      .map(
+                        (name) => OverlayItem(
+                          label: name,
+                          value: _playerCounters[name] ?? 0,
+                          onIncrement: () => _incrementPlayerCounter(name),
+                          onDecrement: () => _decrementPlayerCounter(name),
+                        ),
+                      )
+                      .toList(),
+                  onClose: _togglePlayerCounters,
+                ),
               ),
             // Overlay: Actions (Life Paid, Cards Milled, Extra Turns)
             if (_showActions)
-              CounterOverlay(
-                items: [
-                  OverlayItem(
-                    label: 'Life Paid',
-                    value: _lifePaid,
-                    onIncrement: _incrementLifePaid,
-                    onDecrement: _decrementLifePaid,
-                  ),
-                  OverlayItem(
-                    label: 'Cards Milled',
-                    value: _cardsMilled,
-                    onIncrement: _incrementCardsMilled,
-                    onDecrement: _decrementCardsMilled,
-                  ),
-                  OverlayItem(
-                    label: 'Extra Turns',
-                    value: _extraTurns,
-                    onIncrement: _incrementExtraTurns,
-                    onDecrement: _decrementExtraTurns,
-                  ),
-                  OverlayItem(
-                    label: 'Cards Drawn',
-                    value: _cardsDrawn,
-                    onIncrement: incrementCardsDrawn,
-                    onDecrement: decrementCardsDrawn,
-                  ),
-                ],
-                onClose: _toggleActions,
+              Positioned.fill(
+                child: CounterOverlay(
+                  items: [
+                    OverlayItem(
+                      label: 'Life Paid',
+                      value: _lifePaid,
+                      onIncrement: _incrementLifePaid,
+                      onDecrement: _decrementLifePaid,
+                    ),
+                    OverlayItem(
+                      label: 'Cards Milled',
+                      value: _cardsMilled,
+                      onIncrement: _incrementCardsMilled,
+                      onDecrement: _decrementCardsMilled,
+                    ),
+                    OverlayItem(
+                      label: 'Extra Turns',
+                      value: _extraTurns,
+                      onIncrement: _incrementExtraTurns,
+                      onDecrement: _decrementExtraTurns,
+                    ),
+                    OverlayItem(
+                      label: 'Cards Drawn',
+                      value: _cardsDrawn,
+                      onIncrement: incrementCardsDrawn,
+                      onDecrement: decrementCardsDrawn,
+                    ),
+                  ],
+                  onClose: _toggleActions,
+                ),
               ),
             // Turn indicator (shown if current player's turn)
             if (widget.isCurrentTurn)

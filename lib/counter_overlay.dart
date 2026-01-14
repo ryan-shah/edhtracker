@@ -72,22 +72,15 @@ class CounterOverlay extends StatelessWidget {
           
           final double itemWidth = constraints.maxWidth / crossAxisCount;
           
-          // Calculate item height based on whether overlay is scrollable
-          double itemHeight;
-          if (isScrollable) {
-            // Fixed height for scrollable items
-            itemHeight = UIConstants.defaultScrollableItemHeight;
-          } else {
-            // Calculate height based on available space for non-scrollable items
-            final rows = (items.length / crossAxisCount).ceil();
-            final availableHeight = constraints.maxHeight;
-            itemHeight = rows > 0 ? availableHeight / rows : UIConstants.defaultNonScrollableItemHeight;
-          }
+          // Calculate item height
+          // Use fixed heights to ensure items start at the top and don't center vertically
+          final double itemHeight = UIConstants.defaultOverlayItemHeight;
 
           return Stack(
             children: [
               // GridView without bottom padding to allow close button to overlay
               GridView.builder(
+                padding: EdgeInsets.zero, // Ensure it starts at the very top
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: crossAxisCount,
                   childAspectRatio: itemWidth / itemHeight,
@@ -100,10 +93,10 @@ class CounterOverlay extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final item = items[index];
                   return Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center, // Align to top
                     children: [
-                      // Top spacing
-                      SizedBox(height: UIConstants.overlayItemPaddingTop),
+                      // Minimal top spacing
+                      const SizedBox(height: 4.0),
                       // Item label with text truncation for long names
                       Text(
                         truncateName(item.label, availableWidth: itemWidth - UIConstants.overlayItemTextAvailableWidthOffset),
@@ -139,8 +132,7 @@ class CounterOverlay extends StatelessWidget {
                           ),
                         ],
                       ),
-                      // Bottom spacing
-                      SizedBox(height: UIConstants.overlayItemPaddingBottom),
+                      const SizedBox(height: 4.0)
                     ],
                   );
                 },
