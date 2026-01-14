@@ -1,7 +1,8 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'commander_autocomplete.dart';
-import 'help_page.dart';
+import 'help_game_setup.dart';
 import 'life_tracker_page.dart';
 import 'utils.dart';
 import 'scryfall_service.dart';
@@ -36,6 +37,12 @@ class _GameSetupPageState extends State<GameSetupPage> {
   @override
   void initState() {
     super.initState();
+    // Lock to portrait mode
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+
     // Initialize with provided data if available
     if (widget.initialPlayerNames != null &&
         widget.initialPartnerNames != null &&
@@ -156,7 +163,7 @@ class _GameSetupPageState extends State<GameSetupPage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const HelpPage()),
+                MaterialPageRoute(builder: (context) => const HelpGameSetup()),
               );
             },
           ),

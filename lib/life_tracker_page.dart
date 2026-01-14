@@ -1,9 +1,10 @@
 import 'dart:async'; // Import for Timer
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'game_logger.dart'; // Import the new game logger
 import 'game_setup_page.dart';
-import 'help_page.dart';
+import 'help_life_tracker.dart';
 import 'player_card.dart';
 
 class LifeTrackerPage extends StatefulWidget {
@@ -50,6 +51,10 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     _currentPlayerIndex = widget.startingPlayerIndex;
     _currentTurnStartTime = DateTime.now(); // Initialize turn start time
     _isTimerEnabled = true; // Timer is enabled by default
@@ -346,7 +351,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const HelpPage(),
+                                  builder: (context) => const HelpLifeTracker(),
                                 ),
                               );
                             },

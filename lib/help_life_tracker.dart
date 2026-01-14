@@ -1,21 +1,33 @@
 import 'package:flutter/material.dart';
 import 'constants.dart';
 
-/// Help page that explains the functionality of the EDH Tracker application.
+/// Help page for the Life Tracker screen.
 ///
 /// Provides detailed information about:
-/// - Game Setup page features and options
-/// - Life Tracker page controls and interactions
-/// - Various tracking tools (Commander Damage, Counters, Actions)
+/// - Life counter and tracking
+/// - Turn management
+/// - Turn timer
+/// - Menu controls
+/// - Tracking tools (Commander Damage, Counters, Actions)
 /// - Tips and best practices
-class HelpPage extends StatelessWidget {
-  const HelpPage({super.key});
+class HelpLifeTracker extends StatefulWidget {
+  const HelpLifeTracker({super.key});
+
+  @override
+  State<HelpLifeTracker> createState() => _HelpLifeTrackerState();
+}
+
+class _HelpLifeTrackerState extends State<HelpLifeTracker> {
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Help'),
+        title: const Text('Life Tracker Help'),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -27,51 +39,51 @@ class HelpPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionTitle(context, 'Game Setup'),
-                  _buildSection(context, [
-                    _buildSectionContent(
-                      'Commander Selection',
-                      'Search for and select a commander for each player. The autocomplete feature will suggest commanders as you type, powered by the Scryfall database.',
-                    ),
-                    _buildSectionContent(
-                      'Partner Commanders',
-                      'Check the "Partner?" checkbox next to a commander to add a second commander to that player. Use this for partner commanders or other multi-commander strategies.',
-                    ),
-                    _buildSectionContent(
-                      'Unconventional Commanders',
-                      'Enable this option to remove the "is:commander" and "is:partner" filters from the search. This allows you to search for any card, useful for alternate formats or house rules.',
-                    ),
-                    _buildSectionContent(
-                      'Starting Life Total',
-                      'Select the starting life total for the game. Standard EDH uses 40 life, but you can customize this value.',
-                    ),
-                    _buildSectionContent(
-                      'Starting Player',
-                      'Choose which player goes first, or select "Random" to randomly determine the starting player.',
-                    ),
-                  ]),
-                  const SizedBox(height: 24),
-                  _buildSectionTitle(context, 'Life Tracker'),
+                  _buildSectionTitle(context, 'Life Tracking'),
                   _buildSection(context, [
                     _buildSectionContent(
                       'Life Counter',
-                      'Each player\'s life total is displayed prominently in the center of their card. Tap the + button to increase life or the - button to decrease life.',
+                      'Each player\'s life total is displayed prominently in the center of their card. This is the primary focus of the tracker.',
                     ),
                     _buildSectionContent(
-                      'Turn Indicator',
-                      'The current player\'s card will have a blue border and display "Turn X" in the corner, where X is the current turn number.',
-                    ),
-                    _buildSectionContent(
-                      'Turn Timer',
-                      'The active player\'s card displays a timer tracking the duration of their turn. This helps monitor game pace and can be toggled on or off from the main menu.',
-                    ),
-                    _buildSectionContent(
-                      'Advancing & Undoing Turns',
-                      'Tap any player card to advance to the next player\'s turn. Long-press any player card to undo the last turn progression and revert the game state to the beginning of the current turn.',
+                      'Adjusting Life',
+                      'Tap the + button to increase life or the - button to decrease life. You can also enter a custom value by tapping directly on the life total.',
                     ),
                     _buildSectionContent(
                       'Commander Art Display',
-                      'If commanders were selected during setup, their card art will be displayed in the background of each player\'s card.',
+                      'If commanders were selected during setup, their card art will be displayed in the background of each player\'s card for visual reference.',
+                    ),
+                  ]),
+                  const SizedBox(height: 24),
+                  _buildSectionTitle(context, 'Turn Management'),
+                  _buildSection(context, [
+                    _buildSectionContent(
+                      'Current Turn Indicator',
+                      'The active player\'s card has a blue border and displays "Turn X" in the corner, where X is the current turn number.',
+                    ),
+                    _buildSectionContent(
+                      'Advancing Turns',
+                      'Tap any player card to advance to the next player\'s turn. This moves the turn indicator and resets the turn timer.',
+                    ),
+                    _buildSectionContent(
+                      'Undoing Turns',
+                      'Long-press any player card to undo the last turn progression. This reverts the game state to the beginning of the previous turn, including all tracked values.',
+                    ),
+                  ]),
+                  const SizedBox(height: 24),
+                  _buildSectionTitle(context, 'Turn Timer'),
+                  _buildSection(context, [
+                    _buildSectionContent(
+                      'Timer Display',
+                      'The active player\'s card displays a timer showing how long their current turn has been running. This helps monitor game pace.',
+                    ),
+                    _buildSectionContent(
+                      'Toggle Timer Visibility',
+                      'Use the timer button in the main menu (left icon) to toggle the timer display on or off. The timer still tracks time internally when hidden.',
+                    ),
+                    _buildSectionContent(
+                      'Timer Reset',
+                      'The timer automatically resets when advancing to the next player\'s turn.',
                     ),
                   ]),
                   const SizedBox(height: 24),
@@ -79,26 +91,32 @@ class HelpPage extends StatelessWidget {
                   _buildSection(context, [
                     _buildToolSection(
                       context,
-                      'Help (Top)',
-                      'Opens this help page to guide you through the application\'s features.',
+                      'Help Button (Top)',
+                      'Opens this help page to guide you through the Life Tracker\'s features.',
                       Icons.help_outline,
                     ),
                     _buildToolSection(
                       context,
-                      'New Game (Right)',
-                      'Resets the match. You can choose to start a new game with the same players/commanders or clear everything to start fresh.',
+                      'New Game Button (Right)',
+                      'Ends the current game and returns to the setup screen. Choose to start with the same players or clear everything for a fresh start.',
                       Icons.restart_alt,
                     ),
                     _buildToolSection(
                       context,
-                      'Toggle Timer (Left)',
+                      'Timer Toggle Button (Left)',
                       'Toggles the visibility of the turn timer on the active player\'s card.',
                       Icons.timer,
                     ),
                     _buildToolSection(
                       context,
-                      'Menu Toggle (Center)',
-                      'Taps to expand or collapse the central control menu.',
+                      'Complete Game Button (Bottom)',
+                      'Marks the current game as complete and logs the final game data.',
+                      Icons.check_circle_outline,
+                    ),
+                    _buildToolSection(
+                      context,
+                      'Menu Button (Center)',
+                      'Expands or collapses the central control menu to show/hide the action buttons.',
                       Icons.menu,
                     ),
                   ]),
@@ -107,8 +125,8 @@ class HelpPage extends StatelessWidget {
                   _buildSection(context, [
                     _buildToolSection(
                       context,
-                      'Cmdr Dmg (Commander Damage)',
-                      'Track damage dealt by each opponent\'s commander. Tap the "Cmdr Dmg" button to open an overlay. Note: In regular EDH, 21 commander damage from a single commander causes that player to lose.',
+                      'Commander Damage (Cmdr Dmg)',
+                      'Track damage dealt by each opponent\'s commander. Tap the "Cmdr Dmg" button to open an overlay. Note: In standard EDH, 21 commander damage from a single commander causes that player to lose.',
                       Icons.shield,
                     ),
                     _buildToolSection(
@@ -124,7 +142,7 @@ class HelpPage extends StatelessWidget {
                       '• Life Paid: Tracks life points paid for effects (e.g., Necropotence, Phyrexian mana).\n'
                       '• Cards Milled: Counts the number of cards milled from libraries.\n'
                       '• Extra Turns: Tracks extra turns taken by the player.\n'
-                      '• Cards Drawn: Tracks the number of cards drawn. This counter automatically increments by one at the start of each player\'s turn.',
+                      '• Cards Drawn: Automatically increments at the start of each turn, but can be manually adjusted.',
                       Icons.track_changes,
                     ),
                   ]),
@@ -133,35 +151,23 @@ class HelpPage extends StatelessWidget {
                   _buildSection(context, [
                     _buildTipContent(
                       'Quick Navigation',
-                      'Use a single tap on any player card to advance turns and a long-press to undo the last turn. This is faster than using an app menu.',
+                      'Use a single tap to advance turns and long-press to undo. This is faster than using the menu.',
                     ),
                     _buildTipContent(
-                      'Undo Functionality',
-                      'The undo feature reverts all game state changes from the current turn, including life totals, counter values, and turn progression. Use it to correct mistakes quickly.',
+                      'Undo for Mistakes',
+                      'The undo feature reverts all game state changes from the current turn, including life totals and counter values. Use it to correct mistakes quickly.',
                     ),
                     _buildTipContent(
                       'Overlay Management',
                       'Only one overlay can be visible at a time. Opening a new overlay will close any previously open one. Close overlays with the red X button.',
                     ),
                     _buildTipContent(
-                      'Life Paid vs Life Total',
-                      'When you tap the + button in the "Life Paid" overlay, it both increments the life paid counter and decrements your actual life total.',
+                      'Life Paid Mechanics',
+                      'When you increment "Life Paid", it both adds to the life paid counter AND decrements your actual life total.',
                     ),
                     _buildTipContent(
-                      'Screen Orientation',
-                      'The app is locked in landscape mode for easy viewing when placed on a table during gameplay.',
-                    ),
-                  ]),
-                  const SizedBox(height: 24),
-                  _buildSectionTitle(context, 'Scryfall Integration'),
-                  _buildSection(context, [
-                    _buildSectionContent(
-                      'Commander Search',
-                      'The app uses the Scryfall API to provide real-time search suggestions for commanders. Make sure you have internet connectivity for the best experience.',
-                    ),
-                    _buildSectionContent(
-                      'Card Art Caching',
-                      'Commander card art is cached locally on your device for offline access. Previously loaded images will still be available even without an internet connection.',
+                      'Table Placement',
+                      'The app is locked in landscape mode for easy viewing when placed on a table during gameplay. This keeps the orientation stable.',
                     ),
                   ]),
                   const SizedBox(height: 24),
