@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import 'game_logger.dart'; // Import the new game logger
 import 'game_setup_page.dart';
+import 'game_summary_page.dart'; // Import the game summary page
 import 'help_life_tracker.dart';
 import 'player_card.dart';
 
@@ -171,6 +172,49 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
     );
   }
 
+  void _showCompleteGameDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('End Game?'),
+          content: const Text(
+            'Are you sure you want to end the game? This will take you to the game summary. '
+            'Make sure the game is actually finished!',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text(
+                'End Game',
+                style: TextStyle(color: Colors.red),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _turnTimer?.cancel(); // Cancel timer on game end
+                _gameLogger.endGame(); // Call endGame method
+                // Navigate to game summary page
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (context) => GameSummaryPage(
+                      gameLogger: _gameLogger,
+                    ),
+                  ),
+                  (route) => false,
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _toggleMenu() {
     setState(() {
       _menuOpen = !_menuOpen;
@@ -181,7 +225,6 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
     setState(() {
       // Record the state *before* advancing the turn
       _gameLogger.recordTurn(_currentPlayerIndex, _turnCount, _playerCardKeys);
-      _gameLogger.logLastTurn();
 
       _currentPlayerIndex = (_currentPlayerIndex + 1) % 4;
       if (_currentPlayerIndex == widget.startingPlayerIndex) {
@@ -389,9 +432,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                             mini: true,
                             onPressed: () {
                               setState(() => _menuOpen = false);
-                              _turnTimer?.cancel(); // Cancel timer on game end
-                              _gameLogger.endGame(); // Call endGame method
-                              _gameLogger.logData();
+                              _showCompleteGameDialog();
                             },
                             child: const Icon(Icons.check_circle_outline),
                           ),

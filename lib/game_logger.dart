@@ -224,4 +224,9 @@ class GameLogger {
   GameSession getSession() {
     return _session;
   }
+
+  /// Returns the turn log list.
+  List<TurnLogEntry> getTurnLog() {
+    return _turnLog;
+  }
 }
