@@ -1,3 +1,4 @@
+import 'dart:async'; // Import for Timer
 import 'package:flutter/material.dart';
 
 import 'game_logger.dart'; // Import the new game logger
@@ -37,12 +38,18 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
   bool _menuOpen = false;
   late GameLogger _gameLogger; // Declare GameLogger instance
 
+  // Turn tracking for timer
+  late DateTime _currentTurnStartTime;
+  Duration _currentTurnDuration = Duration.zero;
+  Timer? _turnTimer;
+
   static const double _menuOffset = 100.0; // Fixed offset from center
 
   @override
   void initState() {
     super.initState();
     _currentPlayerIndex = widget.startingPlayerIndex;
+    _currentTurnStartTime = DateTime.now(); // Initialize turn start time
 
     _gameLogger = GameLogger(
       playerNames: widget.playerNames,
@@ -56,6 +63,24 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
     // Increment cardsDrawn for the starting player and then trigger a state update
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _playerCardKeys[_currentPlayerIndex].currentState?.incrementCardsDrawn();
+      _startTurnTimer(); // Start the timer for the first turn
+    });
+  }
+
+  @override
+  void dispose() {
+    _turnTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startTurnTimer() {
+    _turnTimer?.cancel(); // Cancel any existing timer
+    _turnTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _currentTurnDuration = DateTime.now().difference(_currentTurnStartTime);
+        });
+      }
     });
   }
 
@@ -78,6 +103,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
             TextButton(
               child: const Text('New Game with Same Players'),
               onPressed: () {
+                _turnTimer?.cancel(); // Cancel timer on new game
                 final List<String> initialPlayerNames = [];
                 final List<String> initialPartnerNames = [];
                 final List<bool> initialHasPartner = [];
@@ -117,6 +143,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
             TextButton(
               child: const Text('New Game (Clear Players)'),
               onPressed: () {
+                _turnTimer?.cancel(); // Cancel timer on new game
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(
                     builder: (context) => const GameSetupPage(),
@@ -149,6 +176,10 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
       }
       // Increment cardsDrawn for the next player
       _playerCardKeys[_currentPlayerIndex].currentState?.incrementCardsDrawn();
+
+      _currentTurnStartTime = DateTime.now(); // Reset turn start time for the new turn
+      _currentTurnDuration = Duration.zero; // Reset duration
+      _startTurnTimer(); // Restart the timer for the new turn
     });
   }
 
@@ -167,10 +198,20 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
       if (previousTurnEntry != null) {
         _currentPlayerIndex = previousTurnEntry.activePlayerIndex;
         _turnCount = previousTurnEntry.turnNumber;
+        _currentTurnStartTime = previousTurnEntry.turnStartTime;
+        // The duration shown for a previous turn should be its recorded duration, not elapsed time since now.
+        // However, if we go back to a turn, it becomes the *current* turn again,
+        // so we track its duration from its original start time to "now" until the turn is advanced again.
+        _currentTurnDuration = DateTime.now().difference(_currentTurnStartTime);
+        _startTurnTimer(); // Restart the timer to track the "reverted" turn's duration
       } else {
-        // This case should ideally not be reached if the initial check is correct
-        // but as a fallback, we can reset to the very first state if needed.
-        // For now, it will simply prevent further action if there's no previous state.
+        // Should only happen if _turnLog becomes empty after removing the last entry,
+        // which means we are at the very beginning of the game.
+        _currentPlayerIndex = widget.startingPlayerIndex;
+        _turnCount = 1;
+        _currentTurnStartTime = _gameLogger.getSession().startTime;
+        _currentTurnDuration = Duration.zero;
+        _startTurnTimer(); // Restart timer for the very first turn
       }
     });
   }
@@ -201,6 +242,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                           onTurnEnd: _nextTurn,
                           onTurnBack: _previousTurn,
                           turnCount: _turnCount,
+                          currentTurnDuration: _currentPlayerIndex == 0 ? _currentTurnDuration : Duration.zero,
                         ),
                       ),
                     ),
@@ -218,6 +260,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                           onTurnEnd: _nextTurn,
                           onTurnBack: _previousTurn,
                           turnCount: _turnCount,
+                          currentTurnDuration: _currentPlayerIndex == 1 ? _currentTurnDuration : Duration.zero,
                         ),
                       ),
                     ),
@@ -239,6 +282,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                         onTurnEnd: _nextTurn,
                         onTurnBack: _previousTurn,
                         turnCount: _turnCount,
+                        currentTurnDuration: _currentPlayerIndex == 3 ? _currentTurnDuration : Duration.zero,
                       ),
                     ),
                     Expanded(
@@ -253,6 +297,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                         onTurnEnd: _nextTurn,
                         onTurnBack: _previousTurn,
                         turnCount: _turnCount,
+                        currentTurnDuration: _currentPlayerIndex == 2 ? _currentTurnDuration : Duration.zero,
                       ),
                     ),
                   ],
@@ -327,6 +372,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                             mini: true,
                             onPressed: () {
                               setState(() => _menuOpen = false);
+                              _turnTimer?.cancel(); // Cancel timer on game end
                               _gameLogger.endGame(); // Call endGame method
                               _gameLogger.logData();
                             },

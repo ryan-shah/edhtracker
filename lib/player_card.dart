@@ -40,6 +40,9 @@ class PlayerCard extends StatefulWidget {
   /// Current turn number
   final int turnCount;
 
+  /// Duration of the current turn
+  final Duration currentTurnDuration;
+
   const PlayerCard({
     super.key,
     required this.playerIndex,
@@ -51,6 +54,7 @@ class PlayerCard extends StatefulWidget {
     required this.onTurnEnd,
     required this.onTurnBack,
     required this.turnCount,
+    required this.currentTurnDuration,
   });
 
   @override
@@ -362,6 +366,13 @@ class PlayerCardState extends State<PlayerCard> {
 
   @override
   Widget build(BuildContext context) {
+    String formatDuration(Duration duration) {
+      String twoDigits(int n) => n.toString().padLeft(2, '0');
+      final minutes = twoDigits(duration.inMinutes.remainder(60));
+      final seconds = twoDigits(duration.inSeconds.remainder(60));
+      return '$minutes:$seconds';
+    }
+
     return GestureDetector(
       // Tap to advance to next player's turn (if current turn)
       onTap: () {
@@ -671,7 +682,7 @@ class PlayerCardState extends State<PlayerCard> {
                   ),
                 ),
               ),
-            // Turn indicator (shown if current player's turn)
+            // Turn indicator and timer (shown if current player's turn)
             if (widget.isCurrentTurn)
               Positioned(
                 top: UIConstants.turnCounterPositionOffset,
@@ -681,24 +692,52 @@ class PlayerCardState extends State<PlayerCard> {
                 left: (widget.playerIndex == 1 || widget.playerIndex == 3)
                     ? UIConstants.turnCounterPositionOffset
                     : null,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: UIConstants.turnCounterPadding,
-                    vertical: UIConstants.turnCounterVerticalPadding,
-                  ),
-                  decoration: BoxDecoration(
-                    color: UIConstants.turnCounterBackgroundColor,
-                    borderRadius: BorderRadius.circular(
-                      UIConstants.turnCounterBorderRadius,
+                child: Column(
+                  crossAxisAlignment: (widget.playerIndex == 0 || widget.playerIndex == 2)
+                      ? CrossAxisAlignment.end
+                      : CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: UIConstants.turnCounterPadding,
+                        vertical: UIConstants.turnCounterVerticalPadding,
+                      ),
+                      decoration: BoxDecoration(
+                        color: UIConstants.turnCounterBackgroundColor,
+                        borderRadius: BorderRadius.circular(
+                          UIConstants.turnCounterBorderRadius,
+                        ),
+                      ),
+                      child: Text(
+                        'Turn ${widget.turnCount}',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: UIConstants.turnCounterTextColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    'Turn ${widget.turnCount}',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: UIConstants.turnCounterTextColor,
-                      fontWeight: FontWeight.bold,
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: UIConstants.turnCounterPadding,
+                        vertical: UIConstants.turnTimerVerticalPadding,
+                      ),
+                      decoration: BoxDecoration(
+                        color: UIConstants.turnCounterBackgroundColor,
+                        borderRadius: BorderRadius.circular(
+                          UIConstants.turnCounterBorderRadius,
+                        ),
+                      ),
+                      child: Text(
+                        formatDuration(widget.currentTurnDuration),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: UIConstants.turnCounterTextColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
           ],

@@ -103,11 +103,15 @@ class TurnLogEntry {
   final int turnNumber;
   final int activePlayerIndex;
   final List<PlayerStateSnapshot> playerStates;
+  final DateTime turnStartTime;
+  final DateTime turnEndTime;
 
   TurnLogEntry({
     required this.turnNumber,
     required this.activePlayerIndex,
     required this.playerStates,
+    required this.turnStartTime,
+    required this.turnEndTime,
   });
 
   Map<String, dynamic> toJson() {
@@ -115,6 +119,8 @@ class TurnLogEntry {
       'turn_number': turnNumber,
       'active_player_index': activePlayerIndex,
       'player_states': playerStates.map((e) => e.toJson()).toList(),
+      'turn_start_time': turnStartTime.toIso8601String(),
+      'turn_end_time': turnEndTime.toIso8601String(),
     };
   }
 }
@@ -123,6 +129,7 @@ class TurnLogEntry {
 class GameLogger {
   final GameSession _session;
   final List<TurnLogEntry> _turnLog = [];
+  DateTime _lastTurnEndTime;
 
   GameLogger({
     required List<String> playerNames,
@@ -140,7 +147,8 @@ class GameLogger {
          unconventionalCommanders: unconventionalCommanders,
          startTime: DateTime.now(),
          endTime: null, // Initialize endTime to null
-       );
+       ),
+       _lastTurnEndTime = DateTime.now(); // Initialize _lastTurnEndTime
 
   /// Records the state of all players at the end of a turn.
   void recordTurn(
@@ -155,13 +163,20 @@ class GameLogger {
         playerStates.add(playerCardState.getCurrentState());
       }
     }
+
+    final currentTurnStartTime = _lastTurnEndTime;
+    final currentTurnEndTime = DateTime.now();
+
     _turnLog.add(
       TurnLogEntry(
         turnNumber: turnNumber,
         activePlayerIndex: activePlayerIndex,
         playerStates: playerStates,
+        turnStartTime: currentTurnStartTime,
+        turnEndTime: currentTurnEndTime,
       ),
     );
+    _lastTurnEndTime = currentTurnEndTime; // Update for the next turn
   }
 
   /// Sets the end time of the game.
@@ -172,7 +187,16 @@ class GameLogger {
   /// Removes the last turn entry and returns the state of the previous turn.
   /// If no turns are left, returns null.
   TurnLogEntry? goToPreviousTurn() {
-    return _turnLog.isNotEmpty ? _turnLog.removeLast() : null;
+    if (_turnLog.isNotEmpty) {
+      final removedEntry = _turnLog.removeLast();
+      if (_turnLog.isNotEmpty) {
+        _lastTurnEndTime = _turnLog.last.turnEndTime;
+      } else {
+        _lastTurnEndTime = _session.startTime;
+      }
+      return removedEntry;
+    }
+    return null;
   }
 
   /// Outputs the entire game log as a JSON string.
@@ -195,5 +219,9 @@ class GameLogger {
 
   void logLastTurn() {
     print(_turnLog.last.toJson());
+  }
+
+  GameSession getSession() {
+    return _session;
   }
 }
