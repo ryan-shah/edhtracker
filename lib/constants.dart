@@ -113,6 +113,9 @@ class UIConstants {
   /// Border radius for the turn counter container
   static const double turnCounterBorderRadius = 12.0;
 
+  /// Vertical padding for the turn timer
+  static const double turnTimerVerticalPadding = 4.0;
+
   // ============================================================================
   // Player Counter Types
   // ============================================================================

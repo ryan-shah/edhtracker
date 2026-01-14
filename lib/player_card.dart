@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'constants.dart';
 import 'counter_overlay.dart';
 import 'utils.dart';
+import 'game_logger.dart'; // Import the new game logger
 
 /// Stateless widget that represents the configuration for a player card.
 ///
@@ -39,6 +40,12 @@ class PlayerCard extends StatefulWidget {
   /// Current turn number
   final int turnCount;
 
+  /// Duration of the current turn
+  final Duration currentTurnDuration;
+
+  /// Whether to show the turn timer display
+  final bool showTimerDisplay;
+
   const PlayerCard({
     super.key,
     required this.playerIndex,
@@ -50,6 +57,8 @@ class PlayerCard extends StatefulWidget {
     required this.onTurnEnd,
     required this.onTurnBack,
     required this.turnCount,
+    required this.currentTurnDuration,
+    this.showTimerDisplay = true, // Default to true
   });
 
   @override
@@ -89,6 +98,8 @@ class PlayerCardState extends State<PlayerCard> {
   /// Whether the player has dismissed the elimination overlay at least once
   bool _hasDismissedElimination = false;
 
+  // Removed: bool _showTimer = false;
+
   // ============================================================================
   // Action Trackers
   // ============================================================================
@@ -126,6 +137,7 @@ class PlayerCardState extends State<PlayerCard> {
       _lifePaid = 0;
       _cardsMilled = 0;
       _extraTurns = 0;
+      _cardsDrawn = 0;
     });
   }
 
@@ -304,6 +316,8 @@ class PlayerCardState extends State<PlayerCard> {
     });
   }
 
+  // Removed: void toggleTurnTimer() { ... }
+
   // ============================================================================
   // Player Counter Management
   // ============================================================================
@@ -329,8 +343,44 @@ class PlayerCardState extends State<PlayerCard> {
     });
   }
 
+  /// Returns a snapshot of the current player's state.
+  PlayerStateSnapshot getCurrentState() {
+    final List<CommanderDamageTaken> commanderDamageList = [];
+    _commanderDamage.forEach((key, value) {
+      final parts = key.split('_');
+      commanderDamageList.add(
+        CommanderDamageTaken(
+          sourcePlayerIndex: int.parse(parts[0]),
+          commanderName: widget.allCommanderNames[int.parse(parts[0])][int.parse(parts[1])],
+          damage: value,
+        ),
+      );
+    });
+
+    return PlayerStateSnapshot(
+      playerIndex: widget.playerIndex,
+      life: _life,
+      counters: Map.from(_playerCounters), // Create a copy
+      actionTrackers: {
+        'life_paid': _lifePaid,
+        'cards_milled': _cardsMilled,
+        'extra_turns': _extraTurns,
+        'cards_drawn': _cardsDrawn,
+      },
+      commanderDamageTaken: commanderDamageList,
+      isEliminated: _isEliminated,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    String formatDuration(Duration duration) {
+      String twoDigits(int n) => n.toString().padLeft(2, '0');
+      final minutes = twoDigits(duration.inMinutes.remainder(60));
+      final seconds = twoDigits(duration.inSeconds.remainder(60));
+      return '$minutes:$seconds';
+    }
+
     return GestureDetector(
       // Tap to advance to next player's turn (if current turn)
       onTap: () {
@@ -634,14 +684,14 @@ class PlayerCardState extends State<PlayerCard> {
                             color: Colors.white70,
                             fontSize: 12,
                           ),
-                        ),
+                          ),
                       ],
                     ),
                   ),
                 ),
               ),
-            // Turn indicator (shown if current player's turn)
-            if (widget.isCurrentTurn)
+            // Turn indicator and timer (shown if current player's turn and timer display is enabled)
+            if (widget.isCurrentTurn && widget.showTimerDisplay)
               Positioned(
                 top: UIConstants.turnCounterPositionOffset,
                 right: (widget.playerIndex == 0 || widget.playerIndex == 2)
@@ -650,24 +700,52 @@ class PlayerCardState extends State<PlayerCard> {
                 left: (widget.playerIndex == 1 || widget.playerIndex == 3)
                     ? UIConstants.turnCounterPositionOffset
                     : null,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: UIConstants.turnCounterPadding,
-                    vertical: UIConstants.turnCounterVerticalPadding,
-                  ),
-                  decoration: BoxDecoration(
-                    color: UIConstants.turnCounterBackgroundColor,
-                    borderRadius: BorderRadius.circular(
-                      UIConstants.turnCounterBorderRadius,
+                child: Column(
+                  crossAxisAlignment: (widget.playerIndex == 0 || widget.playerIndex == 2)
+                      ? CrossAxisAlignment.end
+                      : CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: UIConstants.turnCounterPadding,
+                        vertical: UIConstants.turnCounterVerticalPadding,
+                      ),
+                      decoration: BoxDecoration(
+                        color: UIConstants.turnCounterBackgroundColor,
+                        borderRadius: BorderRadius.circular(
+                          UIConstants.turnCounterBorderRadius,
+                        ),
+                      ),
+                      child: Text(
+                        'Turn ${widget.turnCount}',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: UIConstants.turnCounterTextColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    'Turn ${widget.turnCount}',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: UIConstants.turnCounterTextColor,
-                      fontWeight: FontWeight.bold,
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: UIConstants.turnCounterPadding,
+                        vertical: UIConstants.turnTimerVerticalPadding,
+                      ),
+                      decoration: BoxDecoration(
+                        color: UIConstants.turnCounterBackgroundColor,
+                        borderRadius: BorderRadius.circular(
+                          UIConstants.turnCounterBorderRadius,
+                        ),
+                      ),
+                      child: Text(
+                        formatDuration(widget.currentTurnDuration),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: UIConstants.turnCounterTextColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
           ],

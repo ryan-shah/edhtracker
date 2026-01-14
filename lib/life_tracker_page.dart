@@ -1,7 +1,11 @@
+import 'dart:async'; // Import for Timer
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import 'game_logger.dart'; // Import the new game logger
 import 'game_setup_page.dart';
-import 'help_page.dart';
+import 'game_summary_page.dart'; // Import the game summary page
+import 'help_life_tracker.dart';
 import 'player_card.dart';
 
 class LifeTrackerPage extends StatefulWidget {
@@ -34,17 +38,64 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
   late int _currentPlayerIndex;
   int _turnCount = 1;
   bool _menuOpen = false;
+  // Timer visibility state moved to PlayerCard, but this controls if timer *ticks* and is *passed down*
+  late bool _isTimerEnabled; 
+  late GameLogger _gameLogger; // Declare GameLogger instance
+
+  // Turn tracking for timer
+  late DateTime _currentTurnStartTime;
+  Duration _currentTurnDuration = Duration.zero;
+  Timer? _turnTimer;
 
   static const double _menuOffset = 100.0; // Fixed offset from center
 
   @override
   void initState() {
     super.initState();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     _currentPlayerIndex = widget.startingPlayerIndex;
+    _currentTurnStartTime = DateTime.now(); // Initialize turn start time
+    _isTimerEnabled = true; // Timer is enabled by default
+
+    _gameLogger = GameLogger(
+      playerNames: widget.playerNames,
+      playerCommanderNames: widget.playerCommanderNames,
+      playerArtUrls: widget.playerArtUrls,
+      startingLife: widget.startingLife,
+      startingPlayerIndex: widget.startingPlayerIndex,
+      unconventionalCommanders: widget.unconventionalCommanders,
+    );
+
     // Increment cardsDrawn for the starting player and then trigger a state update
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _playerCardKeys[_currentPlayerIndex].currentState?.incrementCardsDrawn();
+      _startTurnTimer(); // Start the timer for the first turn
     });
+  }
+
+  @override
+  void dispose() {
+    _turnTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startTurnTimer() {
+    _turnTimer?.cancel(); // Cancel any existing timer
+    _turnTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          _currentTurnDuration = DateTime.now().difference(_currentTurnStartTime);
+        });
+      }
+    });
+  }
+
+  void _toggleTimerDisplay() {
+    setState(() => _isTimerEnabled = !_isTimerEnabled);
+    // PlayerCard will now use the passed `_isTimerEnabled` to decide whether to show the timer.
   }
 
   void _showResetDialog() {
@@ -66,6 +117,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
             TextButton(
               child: const Text('New Game with Same Players'),
               onPressed: () {
+                _turnTimer?.cancel(); // Cancel timer on new game
                 final List<String> initialPlayerNames = [];
                 final List<String> initialPartnerNames = [];
                 final List<bool> initialHasPartner = [];
@@ -105,9 +157,53 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
             TextButton(
               child: const Text('New Game (Clear Players)'),
               onPressed: () {
+                _turnTimer?.cancel(); // Cancel timer on new game
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(
                     builder: (context) => const GameSetupPage(),
+                  ),
+                  (route) => false,
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showCompleteGameDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('End Game?'),
+          content: const Text(
+            'Are you sure you want to end the game? This will take you to the game summary. '
+            'Make sure the game is actually finished!',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text(
+                'End Game',
+                style: TextStyle(color: Colors.red),
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _turnTimer?.cancel(); // Cancel timer on game end
+                _gameLogger.endGame(); // Call endGame method
+                // Navigate to game summary page
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (context) => GameSummaryPage(
+                      gameLogger: _gameLogger,
+                    ),
                   ),
                   (route) => false,
                 );
@@ -127,12 +223,19 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
 
   void _nextTurn() {
     setState(() {
+      // Record the state *before* advancing the turn
+      _gameLogger.recordTurn(_currentPlayerIndex, _turnCount, _playerCardKeys);
+
       _currentPlayerIndex = (_currentPlayerIndex + 1) % 4;
       if (_currentPlayerIndex == widget.startingPlayerIndex) {
         _turnCount++;
       }
       // Increment cardsDrawn for the next player
       _playerCardKeys[_currentPlayerIndex].currentState?.incrementCardsDrawn();
+
+      _currentTurnStartTime = DateTime.now(); // Reset turn start time for the new turn
+      _currentTurnDuration = Duration.zero; // Reset duration
+      _startTurnTimer(); // Restart the timer for the new turn
     });
   }
 
@@ -140,15 +243,31 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
     setState(() {
       if (_turnCount == 1 &&
           _currentPlayerIndex == widget.startingPlayerIndex) {
+        // Cannot go back before the very first turn
         return;
       }
-      final bool isNewTurn = _currentPlayerIndex == widget.startingPlayerIndex;
-      // Decrement cardsDrawn for the previous player *before* changing _currentPlayerIndex
+
+      // Decrement cardsDrawn for the current player before restoring previous state
       _playerCardKeys[_currentPlayerIndex].currentState?.decrementCardsDrawn();
 
-      _currentPlayerIndex = (_currentPlayerIndex - 1 + 4) % 4;
-      if (isNewTurn) {
-        _turnCount--;
+      final previousTurnEntry = _gameLogger.goToPreviousTurn();
+      if (previousTurnEntry != null) {
+        _currentPlayerIndex = previousTurnEntry.activePlayerIndex;
+        _turnCount = previousTurnEntry.turnNumber;
+        _currentTurnStartTime = previousTurnEntry.turnStartTime;
+        // The duration shown for a previous turn should be its recorded duration, not elapsed time since now.
+        // However, if we go back to a turn, it becomes the *current* turn again,
+        // so we track its duration from its original start time to "now" until the turn is advanced again.
+        _currentTurnDuration = DateTime.now().difference(_currentTurnStartTime);
+        _startTurnTimer(); // Restart the timer to track the "reverted" turn's duration
+      } else {
+        // Should only happen if _turnLog becomes empty after removing the last entry,
+        // which means we are at the very beginning of the game.
+        _currentPlayerIndex = widget.startingPlayerIndex;
+        _turnCount = 1;
+        _currentTurnStartTime = _gameLogger.getSession().startTime;
+        _currentTurnDuration = Duration.zero;
+        _startTurnTimer(); // Restart timer for the very first turn
       }
     });
   }
@@ -179,6 +298,8 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                           onTurnEnd: _nextTurn,
                           onTurnBack: _previousTurn,
                           turnCount: _turnCount,
+                          currentTurnDuration: _currentPlayerIndex == 0 ? _currentTurnDuration : Duration.zero,
+                          showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
                         ),
                       ),
                     ),
@@ -196,6 +317,8 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                           onTurnEnd: _nextTurn,
                           onTurnBack: _previousTurn,
                           turnCount: _turnCount,
+                          currentTurnDuration: _currentPlayerIndex == 1 ? _currentTurnDuration : Duration.zero,
+                          showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
                         ),
                       ),
                     ),
@@ -217,6 +340,8 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                         onTurnEnd: _nextTurn,
                         onTurnBack: _previousTurn,
                         turnCount: _turnCount,
+                        currentTurnDuration: _currentPlayerIndex == 3 ? _currentTurnDuration : Duration.zero,
+                        showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
                       ),
                     ),
                     Expanded(
@@ -231,6 +356,8 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                         onTurnEnd: _nextTurn,
                         onTurnBack: _previousTurn,
                         turnCount: _turnCount,
+                        currentTurnDuration: _currentPlayerIndex == 2 ? _currentTurnDuration : Duration.zero,
+                        showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
                       ),
                     ),
                   ],
@@ -267,7 +394,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const HelpPage(),
+                                  builder: (context) => const HelpLifeTracker(),
                                 ),
                               );
                             },
@@ -304,14 +431,14 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                             heroTag: 'complete_game_button',
                             mini: true,
                             onPressed: () {
-                              // TODO: Implement complete game functionality
                               setState(() => _menuOpen = false);
+                              _showCompleteGameDialog();
                             },
                             child: const Icon(Icons.check_circle_outline),
                           ),
                         ),
                       ),
-                    // Left button (close)
+                    // Timer toggle button (left)
                     if (_menuOpen)
                       Positioned(
                         left: centerX - _menuOffset,
@@ -319,12 +446,10 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                         bottom: 0,
                         child: Center(
                           child: FloatingActionButton(
-                            heroTag: 'close_menu_button',
+                            heroTag: 'timer_button',
                             mini: true,
-                            onPressed: () {
-                              setState(() => _menuOpen = false);
-                            },
-                            child: const Icon(Icons.close),
+                            onPressed: _toggleTimerDisplay, // Use new method
+                            child: _isTimerEnabled ? const Icon(Icons.timer_outlined) : const Icon(Icons.timer_off_outlined), // Update icon based on state
                           ),
                         ),
                       ),
