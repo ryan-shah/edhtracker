@@ -43,6 +43,9 @@ class PlayerCard extends StatefulWidget {
   /// Duration of the current turn
   final Duration currentTurnDuration;
 
+  /// Whether to show the turn timer display
+  final bool showTimerDisplay;
+
   const PlayerCard({
     super.key,
     required this.playerIndex,
@@ -55,6 +58,7 @@ class PlayerCard extends StatefulWidget {
     required this.onTurnBack,
     required this.turnCount,
     required this.currentTurnDuration,
+    this.showTimerDisplay = true, // Default to true
   });
 
   @override
@@ -94,8 +98,7 @@ class PlayerCardState extends State<PlayerCard> {
   /// Whether the player has dismissed the elimination overlay at least once
   bool _hasDismissedElimination = false;
 
-  /// Whether to show the turn timer
-  bool _showTimer = false;
+  // Removed: bool _showTimer = false;
 
   // ============================================================================
   // Action Trackers
@@ -313,12 +316,7 @@ class PlayerCardState extends State<PlayerCard> {
     });
   }
 
-  /// Toggles the visibility of the turn timer
-  void toggleTurnTimer() {
-    setState(() {
-      _showTimer = !_showTimer;
-    });
-  }
+  // Removed: void toggleTurnTimer() { ... }
 
   // ============================================================================
   // Player Counter Management
@@ -692,8 +690,8 @@ class PlayerCardState extends State<PlayerCard> {
                   ),
                 ),
               ),
-            // Turn indicator and timer (shown if current player's turn)
-            if (widget.isCurrentTurn)
+            // Turn indicator and timer (shown if current player's turn and timer display is enabled)
+            if (widget.isCurrentTurn && widget.showTimerDisplay)
               Positioned(
                 top: UIConstants.turnCounterPositionOffset,
                 right: (widget.playerIndex == 0 || widget.playerIndex == 2)
@@ -727,28 +725,26 @@ class PlayerCardState extends State<PlayerCard> {
                         ),
                       ),
                     ),
-                    if (_showTimer) ...[
-                      const SizedBox(height: 4),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: UIConstants.turnCounterPadding,
-                          vertical: UIConstants.turnTimerVerticalPadding,
-                        ),
-                        decoration: BoxDecoration(
-                          color: UIConstants.turnCounterBackgroundColor,
-                          borderRadius: BorderRadius.circular(
-                            UIConstants.turnCounterBorderRadius,
-                          ),
-                        ),
-                        child: Text(
-                          formatDuration(widget.currentTurnDuration),
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: UIConstants.turnCounterTextColor,
-                            fontWeight: FontWeight.bold,
-                          ),
+                    const SizedBox(height: 4),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: UIConstants.turnCounterPadding,
+                        vertical: UIConstants.turnTimerVerticalPadding,
+                      ),
+                      decoration: BoxDecoration(
+                        color: UIConstants.turnCounterBackgroundColor,
+                        borderRadius: BorderRadius.circular(
+                          UIConstants.turnCounterBorderRadius,
                         ),
                       ),
-                    ],
+                      child: Text(
+                        formatDuration(widget.currentTurnDuration),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: UIConstants.turnCounterTextColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

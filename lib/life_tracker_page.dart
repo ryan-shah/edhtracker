@@ -36,7 +36,8 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
   late int _currentPlayerIndex;
   int _turnCount = 1;
   bool _menuOpen = false;
-  bool _showTimer = false;
+  // Timer visibility state moved to PlayerCard, but this controls if timer *ticks* and is *passed down*
+  late bool _isTimerEnabled; 
   late GameLogger _gameLogger; // Declare GameLogger instance
 
   // Turn tracking for timer
@@ -51,6 +52,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
     super.initState();
     _currentPlayerIndex = widget.startingPlayerIndex;
     _currentTurnStartTime = DateTime.now(); // Initialize turn start time
+    _isTimerEnabled = true; // Timer is enabled by default
 
     _gameLogger = GameLogger(
       playerNames: widget.playerNames,
@@ -85,11 +87,9 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
     });
   }
 
-  void _toggleTurnTimer() {
-    setState(() => _showTimer = !_showTimer);
-    for (int i = 0; i < 4; i++) {
-      _playerCardKeys[i].currentState?.toggleTurnTimer();
-    }
+  void _toggleTimerDisplay() {
+    setState(() => _isTimerEnabled = !_isTimerEnabled);
+    // PlayerCard will now use the passed `_isTimerEnabled` to decide whether to show the timer.
   }
 
   void _showResetDialog() {
@@ -251,6 +251,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                           onTurnBack: _previousTurn,
                           turnCount: _turnCount,
                           currentTurnDuration: _currentPlayerIndex == 0 ? _currentTurnDuration : Duration.zero,
+                          showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
                         ),
                       ),
                     ),
@@ -269,6 +270,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                           onTurnBack: _previousTurn,
                           turnCount: _turnCount,
                           currentTurnDuration: _currentPlayerIndex == 1 ? _currentTurnDuration : Duration.zero,
+                          showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
                         ),
                       ),
                     ),
@@ -291,6 +293,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                         onTurnBack: _previousTurn,
                         turnCount: _turnCount,
                         currentTurnDuration: _currentPlayerIndex == 3 ? _currentTurnDuration : Duration.zero,
+                        showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
                       ),
                     ),
                     Expanded(
@@ -306,6 +309,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                         onTurnBack: _previousTurn,
                         turnCount: _turnCount,
                         currentTurnDuration: _currentPlayerIndex == 2 ? _currentTurnDuration : Duration.zero,
+                        showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
                       ),
                     ),
                   ],
@@ -388,7 +392,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                           ),
                         ),
                       ),
-                    // Left button (close)
+                    // Timer toggle button (left)
                     if (_menuOpen)
                       Positioned(
                         left: centerX - _menuOffset,
@@ -398,8 +402,8 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                           child: FloatingActionButton(
                             heroTag: 'timer_button',
                             mini: true,
-                            onPressed: _toggleTurnTimer,
-                            child: _showTimer ? const Icon(Icons.timer_outlined) : const Icon(Icons.timer_off_outlined),
+                            onPressed: _toggleTimerDisplay, // Use new method
+                            child: _isTimerEnabled ? const Icon(Icons.timer_outlined) : const Icon(Icons.timer_off_outlined), // Update icon based on state
                           ),
                         ),
                       ),
