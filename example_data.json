@@ -1,0 +1,93 @@
+{
+  "game_session": {
+    "session_id": "edh-2023-10-27-xyz",
+    "start_time": "2023-10-27T14:00:00Z",
+    "end_time": "2023-10-27T15:30:22Z",
+    "starting_life": 40,
+    "players": [
+      {
+        "player_index": 0,
+        "name": "Ryan",
+        "commanders": ["Thrasios, Triton Hero", "Tymna the Weaver"]
+      },
+      {
+        "player_index": 1,
+        "name": "Alice",
+        "commanders": ["The Ur-Dragon"]
+      },
+      {
+        "player_index": 2,
+        "name": "Bob",
+        "commanders": ["Yoshimaru, Ever Faithful", "Kediss, Emberclaw Familiar"]
+      },
+      {
+        "player_index": 3,
+        "name": "Charlie",
+        "commanders": ["Muldrotha, the Gravetide"]
+      }
+    ]
+  },
+  "turn_log": [
+    {
+      "turn_number": 1,
+      "active_player_index": 0,
+      "player_states": [
+        {
+          "player_index": 0,
+          "life": 40,
+          "counters": {
+            "poison": 0,
+            "energy": 0,
+            "experience": 0,
+            "rad": 0
+          },
+          "action_trackers": {
+            "life_paid": 0,
+            "cards_drawn": 1,
+            "cards_milled": 0,
+            "extra_turns": 0
+          },
+          "commander_damage_taken": [
+            {
+              "source_player_index": 1,
+              "commander_name": "The Ur-Dragon",
+              "damage": 0
+            },
+            {
+              "source_player_index": 2,
+              "commander_name": "Yoshimaru, Ever Faithful",
+              "damage": 0
+            },
+            {
+              "source_player_index": 2,
+              "commander_name": "Kediss, Emberclaw Familiar",
+              "damage": 0
+            }
+          ]
+        },
+        { "player_index": 1, "comment": "Snapshot for Player 1..." },
+        { "player_index": 2, "comment": "Snapshot for Player 2..." },
+        { "player_index": 3, "comment": "Snapshot for Player 3..." }
+      ]
+    },
+    {
+      "turn_number": 2,
+      "active_player_index": 1,
+      "player_states": [
+        {
+          "player_index": 0,
+          "life": 38,
+          "commander_damage_taken": [
+            {
+              "source_player_index": 1,
+              "commander_name": "The Ur-Dragon",
+              "damage": 2
+            }
+          ],
+          "comment": "Player 0 took 2 damage from Alice's Ur-Dragon during Alice's turn"
+        },
+        { "comment": "... other players ..." }
+      ]
+    }
+  ]
+}

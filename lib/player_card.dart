@@ -86,6 +86,9 @@ class PlayerCardState extends State<PlayerCard> {
   /// Whether the player is currently shown as eliminated
   bool _isEliminated = false;
 
+  /// Whether the player has dismissed the elimination overlay at least once
+  bool _hasDismissedElimination = false;
+
   // ============================================================================
   // Action Trackers
   // ============================================================================
@@ -119,6 +122,7 @@ class PlayerCardState extends State<PlayerCard> {
       _showPlayerCounters = false;
       _showActions = false;
       _isEliminated = false;
+      _hasDismissedElimination = false;
       _lifePaid = 0;
       _cardsMilled = 0;
       _extraTurns = 0;
@@ -245,7 +249,7 @@ class PlayerCardState extends State<PlayerCard> {
     setState(() {
       _commanderDamage.update(key, (value) => value + 1, ifAbsent: () => 1);
       _life--;
-      if (_life == 0 || _commanderDamage[key]! >= 21) {
+      if (_life == 0 || _commanderDamage[key]! == 21) {
         _isEliminated = true;
       }
     });
@@ -443,15 +447,38 @@ class PlayerCardState extends State<PlayerCard> {
                               ),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.add),
-                        onPressed: _incrementLife,
-                        iconSize: UIConstants.lifeCounterIconSize,
-                        color: UIConstants.lifeCounterTextColor,
-                        style: IconButton.styleFrom(
-                          backgroundColor:
-                              UIConstants.buttonBackgroundDarkColor,
-                        ),
+                      // Row to keep buttons together
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.add),
+                            onPressed: _incrementLife,
+                            iconSize: UIConstants.lifeCounterIconSize,
+                            color: UIConstants.lifeCounterTextColor,
+                            style: IconButton.styleFrom(
+                              backgroundColor:
+                                  UIConstants.buttonBackgroundDarkColor,
+                            ),
+                          ),
+                          // Self-eliminate button shown after dismissal
+                          if (_hasDismissedElimination && !_isEliminated)
+                            IconButton(
+                              icon: const Icon(Icons.person_off),
+                              onPressed: () {
+                                setState(() {
+                                  _isEliminated = true;
+                                });
+                              },
+                              iconSize: UIConstants.lifeCounterIconSize * 0.7,
+                              color: Colors.redAccent,
+                              style: IconButton.styleFrom(
+                                backgroundColor:
+                                    UIConstants.buttonBackgroundDarkColor,
+                              ),
+                              tooltip: 'Eliminate Player',
+                            ),
+                        ],
                       ),
                     ],
                   ),
@@ -577,6 +604,7 @@ class PlayerCardState extends State<PlayerCard> {
                   onTap: () {
                     setState(() {
                       _isEliminated = false;
+                      _hasDismissedElimination = true;
                     });
                   },
                   child: Container(
