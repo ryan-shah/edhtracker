@@ -37,7 +37,6 @@ dependencies:
   http: ^1.2.1
   flutter_typeahead: ^5.2.0
   shared_preferences: ^2.3.5
-  path_provider: ^2.1.5
   universal_html: ^2.2.4
   file_picker: ^10.3.8
 

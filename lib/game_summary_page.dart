@@ -1,10 +1,7 @@
-import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:universal_html/html.dart' as html;
 import 'package:file_picker/file_picker.dart';
 
 import 'constants.dart';
@@ -40,87 +37,35 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
       final timestamp = DateTime.now().toString().replaceAll(RegExp(r'[^\w\-]'), '_');
       final filename = 'game_log_$timestamp.json';
 
-      // Check if running on web
-      if (kIsWeb) {
-        _downloadOnWeb(jsonData, filename);
+      if (!mounted) return;
+
+      String? result = await FilePicker.platform.saveFile(
+        dialogTitle: 'Please select an output file:',
+        fileName: filename,
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+        bytes: utf8.encode(jsonData)
+      );
+
+      if (result == null && !kIsWeb) {
+        // User canceled the picker
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Game log downloaded: $filename'),
-              duration: const Duration(seconds: 3),
+            const SnackBar(
+              content: Text('File save cancelled.'),
+              duration: Duration(seconds: 3),
             ),
           );
         }
         return;
       }
 
-      // Mobile implementation - show dialog to choose save location
-      _downloadOnMobile(jsonData, filename);
-    } catch (e) {
+      // On web, the file is downloaded automatically by the browser due to 'bytes' param.
+      // On mobile, FilePicker saves the file to the chosen location.
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error saving game log: $e'),
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    }
-  }
-
-  void _downloadOnWeb(String jsonData, String filename) {
-    try {
-      final bytes = utf8.encode(jsonData);
-      final blob = html.Blob([bytes], 'application/json');
-      final url = html.Url.createObjectUrlFromBlob(blob);
-      final anchor = html.AnchorElement(href: url)
-        ..setAttribute('download', filename)
-        ..click();
-      html.Url.revokeObjectUrl(url);
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  Future<void> _downloadOnMobile(String jsonData, String filename) async {
-    try {
-      // For mobile, we'll use a simple approach: save to the Documents directory
-      // but first show a dialog asking if they want to save
-      if (!mounted) return;
-
-      final result = await showDialog<bool>(
-        context: context,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: const Text('Save Game Log'),
-            content: Text('Save game log as "$filename" to your device?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('Save'),
-              ),
-            ],
-          );
-        },
-      );
-
-      if (result == null || !result) {
-        return;
-      }
-
-      // Save to Documents directory
-      final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/$filename');
-      await file.writeAsString(jsonData);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Game log saved: $filename'),
+            content: Text('Game log saved to: ${kIsWeb ? filename : result}'),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -131,6 +76,7 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
           SnackBar(
             content: Text('Error saving game log: $e'),
             duration: const Duration(seconds: 3),
+            backgroundColor: Colors.red,
           ),
         );
       }
@@ -758,13 +704,7 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
       return '${seconds}s';
     }
   }
-}
-
-/// Stateless widget that displays a single stat with a commander art background.
-///
-/// Similar to the PlayerCard, this widget displays a background image with
-/// the stat value overlayed on top.
-class StatCard extends StatelessWidget {
+}class StatCard extends StatelessWidget {
   /// Label for the stat (e.g., "Most Damage Dealt Overall")
   final String label;
 
