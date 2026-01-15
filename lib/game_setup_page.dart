@@ -1,11 +1,17 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'commander_autocomplete.dart';
+import 'game_logger.dart';
+import 'game_summary_page.dart';
 import 'help_game_setup.dart';
 import 'life_tracker_page.dart';
-import 'utils.dart';
 import 'scryfall_service.dart';
+import 'utils.dart';
 
 class GameSetupPage extends StatefulWidget {
   final List<String>? initialPlayerNames;
@@ -25,7 +31,9 @@ class GameSetupPage extends StatefulWidget {
   State<GameSetupPage> createState() => _GameSetupPageState();
 }
 
-class _GameSetupPageState extends State<GameSetupPage> {
+class _GameSetupPageState extends State<GameSetupPage>
+    with SingleTickerProviderStateMixin { // Corrected mixin
+
   final _playerNames = List.generate(4, (i) => TextEditingController());
   final _partnerNames = List.generate(4, (i) => TextEditingController());
   final _hasPartner = List.generate(4, (i) => false);
@@ -137,6 +145,89 @@ class _GameSetupPageState extends State<GameSetupPage> {
     );
   }
 
+  Future<void> _loadGameFromJson() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json'],
+    );
+
+    if (result != null && result.files.isNotEmpty) {
+      setState(() {
+        _isLoading = true;
+      });
+
+      try {
+        final PlatformFile file = result.files.single;
+        
+        // Read file content - handle both bytes and path
+        String jsonString;
+        if (file.bytes != null) {
+          // If bytes are available (usually on web/some mobile), use them
+          jsonString = utf8.decode(file.bytes!);
+        } else if (file.path != null) {
+          // If path is available (usually on Android/iOS), read from file system
+          final fileContent = await File(file.path!).readAsString();
+          jsonString = fileContent;
+        } else {
+          throw Exception('Unable to read file: neither bytes nor path available');
+        }
+
+        final gameLogger = GameLogger.fromJson(jsonString);
+
+        // Fetch card art URLs for all commanders
+        final session = gameLogger.getSession();
+        final playerArtUrls = <List<String>>[];
+
+        for (int i = 0; i < session.playerCommanderNames.length; i++) {
+          final commanders = session.playerCommanderNames[i];
+          final currentArtUrls = <String>[];
+
+          for (final commander in commanders) {
+            // Skip placeholder names like 'Player X'
+            if (!commander.startsWith('Player ')) {
+              final artUrl = await ScryfallService.getCardArtUrl(commander);
+              if (artUrl != null) {
+                currentArtUrls.add(artUrl);
+              }
+            }
+          }
+
+          playerArtUrls.add(currentArtUrls);
+        }
+
+        // Update the session's playerArtUrls
+        session.playerArtUrls.clear();
+        session.playerArtUrls.addAll(playerArtUrls);
+
+        if (!mounted) return;
+
+        setState(() {
+          _isLoading = false;
+        });
+
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => GameSummaryPage(gameLogger: gameLogger),
+          ),
+        );
+      } catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _isLoading = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading game: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } else {
+      // User canceled the picker
+    }
+  }
+
   String _getPlayerDisplayName(int i) {
     final primary = _playerNames[i].text;
     final partner = _partnerNames[i].text;
@@ -158,6 +249,13 @@ class _GameSetupPageState extends State<GameSetupPage> {
         title: const Text('Game Setup'),
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.upload_file),
+            tooltip: 'Load Game',
+            onPressed: () {
+              _loadGameFromJson();
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.help_outline),
             onPressed: () {
@@ -307,7 +405,7 @@ class _GameSetupPageState extends State<GameSetupPage> {
                   children: [
                     CircularProgressIndicator(),
                     SizedBox(height: 16),
-                    Text('Fetching Commander Art...', style: TextStyle(color: Colors.white)),
+                    Text('Loading game data...', style: TextStyle(color: Colors.white)),
                   ],
                 ),
               ),

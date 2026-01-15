@@ -197,6 +197,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
               onPressed: () {
                 Navigator.of(context).pop();
                 _turnTimer?.cancel(); // Cancel timer on game end
+                _gameLogger.recordTurn(_currentPlayerIndex, _turnCount, _playerCardKeys);
                 _gameLogger.endGame(); // Call endGame method
                 // Navigate to game summary page
                 Navigator.of(context).pushAndRemoveUntil(
