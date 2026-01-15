@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,6 +22,8 @@ class GameSummaryPage extends StatefulWidget {
 }
 
 class _GameSummaryPageState extends State<GameSummaryPage> {
+  int? _selectedPlayerIndex; // null for overall stats, otherwise player index
+
   @override
   void initState() {
     super.initState();
@@ -103,13 +106,16 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildGameSessionInfoGrid(context, session, widget.gameLogger),
+            // Dropdown for selecting overall or player stats
+            _buildStatsTypeDropdown(context, session),
             const SizedBox(height: 24),
-            _buildDamageStatsGrid(context, widget.gameLogger),
-            const SizedBox(height: 24),
-            _buildActionStatsGrid(context, widget.gameLogger),
-            const SizedBox(height: 24),
-            _buildCounterStatsGrid(context, widget.gameLogger),
+            
+            // Display content based on selection
+            if (_selectedPlayerIndex == null)
+              _buildOverallStatsView(context, session)
+            else
+              _buildPlayerStatsView(context, session, _selectedPlayerIndex!),
+            
             const SizedBox(height: 32),
             _buildNewGameButtons(context),
           ],
@@ -117,6 +123,73 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
       ),
     );
   }
+
+  Widget _buildStatsTypeDropdown(BuildContext context, GameSession session) {
+    final playerNames = session.playerNames;
+    
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey),
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: DropdownButton<int?>(
+        value: _selectedPlayerIndex,
+        isExpanded: true,
+        underline: const SizedBox(),
+        onChanged: (int? newValue) {
+          setState(() {
+            _selectedPlayerIndex = newValue;
+          });
+        },
+        items: [
+          const DropdownMenuItem<int?>(
+            value: null,
+            child: Text('Overall Game Stats'),
+          ),
+          ...List.generate(
+            playerNames.length,
+            (index) => DropdownMenuItem<int?>(
+              value: index,
+              child: Text('${playerNames[index]} Stats'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOverallStatsView(BuildContext context, GameSession session) {
+    return Column(
+      children: [
+        _buildGameSessionInfoGrid(context, session, widget.gameLogger),
+        const SizedBox(height: 24),
+        _buildDamageStatsGrid(context, widget.gameLogger),
+        const SizedBox(height: 24),
+        _buildActionStatsGrid(context, widget.gameLogger),
+        const SizedBox(height: 24),
+        _buildCounterStatsGrid(context, widget.gameLogger),
+      ],
+    );
+  }
+
+  Widget _buildPlayerStatsView(BuildContext context, GameSession session, int playerIndex) {
+    return Column(
+      children: [
+        _buildPlayerTimeStats(context, session, playerIndex),
+        const SizedBox(height: 24),
+        _buildPlayerDamageStats(context, session, playerIndex),
+        const SizedBox(height: 24),
+        _buildPlayerActionStats(context, session, playerIndex),
+        const SizedBox(height: 24),
+        _buildPlayerCounterStats(context, session, playerIndex),
+      ],
+    );
+  }
+
+  // ============================================================================
+  // OVERALL STATS WIDGETS (existing code)
+  // ============================================================================
 
   Widget _buildGameSessionInfoGrid(BuildContext context, GameSession session, GameLogger gameLogger) {
     final turnLog = gameLogger.getTurnLog();
@@ -624,6 +697,499 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
     );
   }
 
+  // ============================================================================
+  // PLAYER STATS WIDGETS
+  // ============================================================================
+
+  Widget _buildPlayerTimeStats(BuildContext context, GameSession session, int playerIndex) {
+    final turnLog = widget.gameLogger.getTurnLog();
+    final playerTurns = <TurnLogEntry>[];
+    
+    for (final turn in turnLog) {
+      if (turn.activePlayerIndex == playerIndex) {
+        playerTurns.add(turn);
+      }
+    }
+
+    if (playerTurns.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Calculate time statistics for this player's turns
+    int totalDuration = 0;
+    int longestDuration = 0;
+    int shortestDuration = double.maxFinite.toInt();
+
+    for (final turn in playerTurns) {
+      final duration = turn.turnEndTime.difference(turn.turnStartTime).inSeconds;
+      totalDuration += duration;
+      if (duration > longestDuration) {
+        longestDuration = duration;
+      }
+      if (duration < shortestDuration) {
+        shortestDuration = duration;
+      }
+    }
+
+    final averageDuration = playerTurns.isNotEmpty ? totalDuration ~/ playerTurns.length : 0;
+
+    final stats = <Map<String, dynamic>>[];
+    stats.add({
+      'label': 'Average Turn Time',
+      'value': _formatDuration(Duration(seconds: averageDuration)),
+      'urls': session.playerArtUrls[playerIndex],
+    });
+    stats.add({
+      'label': 'Longest Turn',
+      'value': _formatDuration(Duration(seconds: longestDuration)),
+      'urls': session.playerArtUrls[playerIndex],
+    });
+    stats.add({
+      'label': 'Total Turn Time',
+      'value': _formatDuration(Duration(seconds: totalDuration)),
+      'urls': session.playerArtUrls[playerIndex],
+    });
+    stats.add({
+      'label': 'Total Turns',
+      'value': '${playerTurns.length}',
+      'urls': session.playerArtUrls[playerIndex],
+    });
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Turn Time Stats',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.2,
+          ),
+          itemCount: stats.length,
+          itemBuilder: (context, index) {
+            final stat = stats[index];
+            return StatCard(
+              label: stat['label'],
+              value: stat['value'],
+              backgroundUrls: (stat['urls'] as List<dynamic>?)?.cast<String>() ?? [],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlayerDamageStats(BuildContext context, GameSession session, int playerIndex) {
+    final turnLog = widget.gameLogger.getTurnLog();
+    final playerTurns = <TurnLogEntry>[];
+    
+    for (final turn in turnLog) {
+      if (turn.activePlayerIndex == playerIndex) {
+        playerTurns.add(turn);
+      }
+    }
+
+    if (playerTurns.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Calculate damage dealt by this player during their turns
+    int totalDamage = 0;
+    int maxDamageInTurn = 0;
+    int totalCommanderDamage = 0;
+    int maxCommanderDamageInTurn = 0;
+
+    for (int i = 0; i < turnLog.length; i++) {
+      final turn = turnLog[i];
+      if (turn.activePlayerIndex != playerIndex) continue;
+
+      int turnDamage = 0;
+      int turnCommanderDamage = 0;
+
+      for (final playerState in turn.playerStates) {
+        // Calculate damage dealt to this player during the current player's turn
+        final startingLife = session.startingLife;
+        if (i == 0) {
+          final lifeDifference = startingLife - playerState.life;
+          if (lifeDifference > 0) {
+            turnDamage += lifeDifference;
+          }
+        } else {
+          final previousState = turnLog[i - 1].playerStates.firstWhere(
+            (p) => p.playerIndex == playerState.playerIndex,
+          );
+          final lifeDifference = previousState.life - playerState.life;
+          if (lifeDifference > 0) {
+            turnDamage += lifeDifference;
+          }
+        }
+
+        // Calculate commander damage dealt by this player
+        if (i == 0) {
+          for (final cmdDamage in playerState.commanderDamageTaken) {
+            if (cmdDamage.sourcePlayerIndex == playerIndex) {
+              turnCommanderDamage += cmdDamage.damage;
+            }
+          }
+        } else {
+          final previousState = turnLog[i - 1].playerStates.firstWhere(
+            (p) => p.playerIndex == playerState.playerIndex,
+          );
+
+          final previousCmdDamageMap = <String, int>{};
+          for (final prevCmdDamage in previousState.commanderDamageTaken) {
+            if (prevCmdDamage.sourcePlayerIndex == playerIndex) {
+              final key = prevCmdDamage.commanderName;
+              previousCmdDamageMap[key] = (previousCmdDamageMap[key] ?? 0) + prevCmdDamage.damage;
+            }
+          }
+
+          for (final cmdDamage in playerState.commanderDamageTaken) {
+            if (cmdDamage.sourcePlayerIndex == playerIndex) {
+              final previousDamage = previousCmdDamageMap[cmdDamage.commanderName] ?? 0;
+              final newDamage = cmdDamage.damage - previousDamage;
+              if (newDamage > 0) {
+                turnCommanderDamage += newDamage;
+              }
+            }
+          }
+        }
+      }
+
+      totalDamage += turnDamage;
+      if (turnDamage > maxDamageInTurn) {
+        maxDamageInTurn = turnDamage;
+      }
+
+      totalCommanderDamage += turnCommanderDamage;
+      if (turnCommanderDamage > maxCommanderDamageInTurn) {
+        maxCommanderDamageInTurn = turnCommanderDamage;
+      }
+    }
+
+    final averageDamage = playerTurns.isNotEmpty ? totalDamage ~/ playerTurns.length : 0;
+    final averageCommanderDamage = playerTurns.isNotEmpty ? totalCommanderDamage ~/ playerTurns.length : 0;
+
+    final stats = <Map<String, dynamic>>[];
+    stats.add({
+      'label': 'Average Damage/Turn',
+      'value': '$averageDamage',
+      'urls': session.playerArtUrls[playerIndex],
+    });
+    stats.add({
+      'label': 'Most Damage in Turn',
+      'value': '$maxDamageInTurn',
+      'urls': session.playerArtUrls[playerIndex],
+    });
+    stats.add({
+      'label': 'Total Damage Dealt',
+      'value': '$totalDamage',
+      'urls': session.playerArtUrls[playerIndex],
+    });
+    stats.add({
+      'label': 'Avg Cmd Damage/Turn',
+      'value': '$averageCommanderDamage',
+      'urls': session.playerArtUrls[playerIndex],
+    });
+    stats.add({
+      'label': 'Most Cmd Damage/Turn',
+      'value': '$maxCommanderDamageInTurn',
+      'urls': session.playerArtUrls[playerIndex],
+    });
+    stats.add({
+      'label': 'Total Cmd Damage',
+      'value': '$totalCommanderDamage',
+      'urls': session.playerArtUrls[playerIndex],
+    });
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Damage Stats',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.2,
+          ),
+          itemCount: stats.length,
+          itemBuilder: (context, index) {
+            final stat = stats[index];
+            return StatCard(
+              label: stat['label'],
+              value: stat['value'],
+              backgroundUrls: (stat['urls'] as List<dynamic>?)?.cast<String>() ?? [],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlayerActionStats(BuildContext context, GameSession session, int playerIndex) {
+    final turnLog = widget.gameLogger.getTurnLog();
+    final playerTurns = <TurnLogEntry>[];
+    
+    for (final turn in turnLog) {
+      if (turn.activePlayerIndex == playerIndex) {
+        playerTurns.add(turn);
+      }
+    }
+
+    if (playerTurns.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Calculate action statistics during this player's turns
+    const actions = ['Life Paid', 'Cards Milled', 'Extra Turns', 'Cards Drawn'];
+    final actionStats = <String, Map<String, int>>{}; // action -> {type -> value}
+
+    for (final action in actions) {
+      final key = _actionKeyMap(action);
+      int totalAction = 0;
+      int maxAction = 0;
+
+      for (int i = 0; i < turnLog.length; i++) {
+        final turn = turnLog[i];
+        if (turn.activePlayerIndex != playerIndex) continue;
+
+        for (final playerState in turn.playerStates) {
+          final currentValue = playerState.actionTrackers[key] ?? 0;
+          
+          int actionIncrement = 0;
+          if (i == 0) {
+            actionIncrement = currentValue;
+          } else {
+            final previousState = turnLog[i - 1].playerStates.firstWhere(
+              (p) => p.playerIndex == playerState.playerIndex,
+            );
+            final previousValue = previousState.actionTrackers[key] ?? 0;
+            actionIncrement = currentValue - previousValue;
+          }
+
+          if (actionIncrement > 0) {
+            totalAction += actionIncrement;
+            if (actionIncrement > maxAction) {
+              maxAction = actionIncrement;
+            }
+          }
+        }
+      }
+
+      final averageAction = playerTurns.isNotEmpty ? totalAction ~/ playerTurns.length : 0;
+      actionStats[action] = {
+        'average': averageAction,
+        'max': maxAction,
+        'total': totalAction,
+      };
+    }
+
+    final stats = <Map<String, dynamic>>[];
+
+    for (final action in actions) {
+      final actionData = actionStats[action]!;
+      if (actionData['total']! > 0) {
+        // Split average and max into separate cards
+        stats.add({
+          'label': '$action (Avg)',
+          'value': '${actionData['average']}',
+          'detail': 'Total: ${actionData['total']}',
+          'urls': session.playerArtUrls[playerIndex],
+        });
+        stats.add({
+          'label': '$action (Max)',
+          'value': '${actionData['max']}',
+          'detail': 'Total: ${actionData['total']}',
+          'urls': session.playerArtUrls[playerIndex],
+        });
+      }
+    }
+
+    if (stats.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Action Stats (During Their Turns)',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.2,
+          ),
+          itemCount: stats.length,
+          itemBuilder: (context, index) {
+            final stat = stats[index];
+            return StatCard(
+              label: stat['label'],
+              value: stat['value'],
+              detail: stat['detail'],
+              backgroundUrls: (stat['urls'] as List<dynamic>?)?.cast<String>() ?? [],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPlayerCounterStats(BuildContext context, GameSession session, int playerIndex) {
+    final turnLog = widget.gameLogger.getTurnLog();
+    
+    if (turnLog.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    // Separate counters during player's turn and opponents' turns
+    final counterDuringOwnTurns = <String, Map<String, int>>{};
+    final counterDuringOpponentTurns = <String, Map<String, int>>{};
+
+    for (final counterName in UIConstants.playerCounterTypes) {
+      counterDuringOwnTurns[counterName] = {'max': 0, 'average': 0, 'total': 0};
+      counterDuringOpponentTurns[counterName] = {'max': 0, 'average': 0, 'total': 0};
+    }
+
+    int ownTurnsCount = 0;
+    int opponentTurnsCount = 0;
+
+    for (final turn in turnLog) {
+      final playerState = turn.playerStates.firstWhere(
+        (p) => p.playerIndex == playerIndex,
+      );
+
+      if (turn.activePlayerIndex == playerIndex) {
+        ownTurnsCount++;
+        for (final counterName in UIConstants.playerCounterTypes) {
+          final value = playerState.counters[counterName] ?? 0;
+          counterDuringOwnTurns[counterName]!['max'] = 
+              max(counterDuringOwnTurns[counterName]!['max']!, value);
+          counterDuringOwnTurns[counterName]!['total'] = 
+              counterDuringOwnTurns[counterName]!['total']! + value;
+        }
+      } else {
+        opponentTurnsCount++;
+        for (final counterName in UIConstants.playerCounterTypes) {
+          final value = playerState.counters[counterName] ?? 0;
+          counterDuringOpponentTurns[counterName]!['max'] = 
+              max(counterDuringOpponentTurns[counterName]!['max']!, value);
+          counterDuringOpponentTurns[counterName]!['total'] = 
+              counterDuringOpponentTurns[counterName]!['total']! + value;
+        }
+      }
+    }
+
+    // Calculate averages
+    for (final counterName in UIConstants.playerCounterTypes) {
+      if (ownTurnsCount > 0) {
+        counterDuringOwnTurns[counterName]!['average'] = 
+            counterDuringOwnTurns[counterName]!['total']! ~/ ownTurnsCount;
+      }
+      if (opponentTurnsCount > 0) {
+        counterDuringOpponentTurns[counterName]!['average'] = 
+            counterDuringOpponentTurns[counterName]!['total']! ~/ opponentTurnsCount;
+      }
+    }
+
+    final stats = <Map<String, dynamic>>[];
+
+    for (final counterName in UIConstants.playerCounterTypes) {
+      final ownData = counterDuringOwnTurns[counterName]!;
+      if (ownData['total']! > 0) {
+        stats.add({
+          'label': '$counterName (Own - Avg)',
+          'value': '${ownData['average']}',
+          'detail': 'Total: ${ownData['total']}',
+          'urls': session.playerArtUrls[playerIndex],
+        });
+        stats.add({
+          'label': '$counterName (Own - Max)',
+          'value': '${ownData['max']}',
+          'detail': 'Total: ${ownData['total']}',
+          'urls': session.playerArtUrls[playerIndex],
+        });
+      }
+    }
+
+    for (final counterName in UIConstants.playerCounterTypes) {
+      final oppData = counterDuringOpponentTurns[counterName]!;
+      if (oppData['total']! > 0) {
+        stats.add({
+          'label': '$counterName (Opp - Avg)',
+          'value': '${oppData['average']}',
+          'detail': 'Total: ${oppData['total']}',
+          'urls': session.playerArtUrls[playerIndex],
+        });
+        stats.add({
+          'label': '$counterName (Opp - Max)',
+          'value': '${oppData['max']}',
+          'detail': 'Total: ${oppData['total']}',
+          'urls': session.playerArtUrls[playerIndex],
+        });
+      }
+    }
+
+    if (stats.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Counter Stats',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.2,
+          ),
+          itemCount: stats.length,
+          itemBuilder: (context, index) {
+            final stat = stats[index];
+            return StatCard(
+              label: stat['label'],
+              value: stat['value'],
+              detail: stat['detail'],
+              backgroundUrls: (stat['urls'] as List<dynamic>?)?.cast<String>() ?? [],
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  // ============================================================================
+  // UTILITY METHODS
+  // ============================================================================
+
   Widget _buildNewGameButtons(BuildContext context) {
     return Row(
       children: [
@@ -704,7 +1270,9 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
       return '${seconds}s';
     }
   }
-}class StatCard extends StatelessWidget {
+}
+
+class StatCard extends StatelessWidget {
   /// Label for the stat (e.g., "Most Damage Dealt Overall")
   final String label;
 
