@@ -39,7 +39,7 @@ class OverlayItem {
 /// 
 /// Features:
 /// - Responsive grid layout (1 or 2 columns based on available width)
-/// - Close button floating at the bottom center
+/// - Close button floating at the bottom center (or bottom right in single-column layout)
 /// - Text truncation for long labels
 /// - Responsive icon sizing based on screen width
 class CounterOverlay extends StatelessWidget {
@@ -58,7 +58,7 @@ class CounterOverlay extends StatelessWidget {
     super.key,
     required this.items,
     required this.onClose,
-    this.isScrollable = false,
+    this.isScrollable = true,
   });
 
   @override
@@ -73,8 +73,10 @@ class CounterOverlay extends StatelessWidget {
           final double itemWidth = constraints.maxWidth / crossAxisCount;
           
           // Calculate item height
-          // Use fixed heights to ensure items start at the top and don't center vertically
-          final double itemHeight = UIConstants.defaultOverlayItemHeight;
+          // For single column, use a more compact height to remove space between items
+          final double itemHeight = crossAxisCount == 1 
+              ? UIConstants.defaultOverlayItemHeight * 0.75 
+              : UIConstants.defaultOverlayItemHeight;
 
           return Stack(
             children: [
@@ -93,9 +95,10 @@ class CounterOverlay extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final item = items[index];
                   return Column(
-                    mainAxisAlignment: MainAxisAlignment.center, // Align to top
+                    mainAxisAlignment: crossAxisCount == 1 
+                        ? MainAxisAlignment.start 
+                        : MainAxisAlignment.center,
                     children: [
-                      // Minimal top spacing
                       const SizedBox(height: 4.0),
                       // Item label with text truncation for long names
                       Text(
@@ -116,6 +119,9 @@ class CounterOverlay extends StatelessWidget {
                                 ? UIConstants.largeIconSize 
                                 : UIConstants.smallIconSize,
                             onPressed: item.onDecrement,
+                            visualDensity: crossAxisCount == 1 
+                                ? VisualDensity.compact 
+                                : VisualDensity.standard,
                           ),
                           // Current counter value
                           Text(
@@ -129,27 +135,38 @@ class CounterOverlay extends StatelessWidget {
                                 ? UIConstants.largeIconSize 
                                 : UIConstants.smallIconSize,
                             onPressed: item.onIncrement,
+                            visualDensity: crossAxisCount == 1 
+                                ? VisualDensity.compact 
+                                : VisualDensity.standard,
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4.0)
+                      if (crossAxisCount > 1) const SizedBox(height: 4.0)
                     ],
                   );
                 },
               ),
-              // Close button floating at bottom center
+              // Close button floating
+              // Moves to bottom right if screen is small (single column), otherwise bottom center
               Positioned(
                 bottom: UIConstants.overlayButtonBottom,
-                left: 0,
-                right: 0,
-                child: Center(
-                  child: FloatingActionButton(
-                    onPressed: onClose,
-                    backgroundColor: UIConstants.closeButtonColor,
-                    mini: true,
-                    child: const Icon(Icons.close),
-                  ),
-                ),
+                left: crossAxisCount == 1 ? null : 0,
+                right: crossAxisCount == 1 ? UIConstants.overlayButtonBottom : 0,
+                child: crossAxisCount == 1
+                    ? FloatingActionButton(
+                        onPressed: onClose,
+                        backgroundColor: UIConstants.closeButtonColor,
+                        mini: true,
+                        child: const Icon(Icons.close),
+                      )
+                    : Center(
+                        child: FloatingActionButton(
+                          onPressed: onClose,
+                          backgroundColor: UIConstants.closeButtonColor,
+                          mini: true,
+                          child: const Icon(Icons.close),
+                        ),
+                      ),
               ),
             ],
           );

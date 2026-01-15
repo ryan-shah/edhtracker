@@ -460,50 +460,17 @@ class PlayerCardState extends State<PlayerCard> {
                   ),
                 // Life total display with increment/decrement buttons
                 Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.remove),
-                        onPressed: _decrementLife,
-                        iconSize: UIConstants.lifeCounterIconSize,
-                        color: UIConstants.lifeCounterTextColor,
-                        style: IconButton.styleFrom(
-                          backgroundColor:
-                              UIConstants.buttonBackgroundDarkColor,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: UIConstants.lifeCounterPaddingHorizontal,
-                        ),
-                        child: Text(
-                          '$_life',
-                          style: Theme.of(context).textTheme.displayLarge
-                              ?.copyWith(
-                                color: UIConstants.lifeCounterTextColor,
-                                fontWeight: FontWeight.bold,
-                                shadows: [
-                                  Shadow(
-                                    blurRadius:
-                                        UIConstants.lifeCounterShadowBlurRadius,
-                                    color: UIConstants.lifeCounterShadowColor,
-                                    offset: const Offset(
-                                      UIConstants.lifeCounterShadowOffsetX,
-                                      UIConstants.lifeCounterShadowOffsetY,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                        ),
-                      ),
-                      // Row to keep buttons together
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
+                  flex: 3,
+                  child: FittedBox(
+                    fit: BoxFit.contain,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.add),
-                            onPressed: _incrementLife,
+                            icon: const Icon(Icons.remove),
+                            onPressed: _decrementLife,
                             iconSize: UIConstants.lifeCounterIconSize,
                             color: UIConstants.lifeCounterTextColor,
                             style: IconButton.styleFrom(
@@ -511,64 +478,128 @@ class PlayerCardState extends State<PlayerCard> {
                                   UIConstants.buttonBackgroundDarkColor,
                             ),
                           ),
-                          // Self-eliminate button shown after dismissal
-                          if (_hasDismissedElimination && !_isEliminated)
-                            IconButton(
-                              icon: const Icon(Icons.person_off),
-                              onPressed: () {
-                                setState(() {
-                                  _isEliminated = true;
-                                });
-                              },
-                              iconSize: UIConstants.lifeCounterIconSize * 0.7,
-                              color: Colors.redAccent,
-                              style: IconButton.styleFrom(
-                                backgroundColor:
-                                    UIConstants.buttonBackgroundDarkColor,
-                              ),
-                              tooltip: 'Eliminate Player',
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: UIConstants.lifeCounterPaddingHorizontal,
                             ),
+                            child: Text(
+                              '$_life',
+                              style: Theme.of(context).textTheme.displayLarge
+                                  ?.copyWith(
+                                    color: UIConstants.lifeCounterTextColor,
+                                    fontWeight: FontWeight.bold,
+                                    shadows: [
+                                      Shadow(
+                                        blurRadius:
+                                            UIConstants.lifeCounterShadowBlurRadius,
+                                        color: UIConstants.lifeCounterShadowColor,
+                                        offset: const Offset(
+                                          UIConstants.lifeCounterShadowOffsetX,
+                                          UIConstants.lifeCounterShadowOffsetY,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                            ),
+                          ),
+                          // Row to keep buttons together
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.add),
+                                onPressed: _incrementLife,
+                                iconSize: UIConstants.lifeCounterIconSize,
+                                color: UIConstants.lifeCounterTextColor,
+                                style: IconButton.styleFrom(
+                                  backgroundColor:
+                                      UIConstants.buttonBackgroundDarkColor,
+                                ),
+                              ),
+                              // Self-eliminate button shown after dismissal
+                              if (_hasDismissedElimination && !_isEliminated)
+                                IconButton(
+                                  icon: const Icon(Icons.person_off),
+                                  onPressed: () {
+                                    setState(() {
+                                      _isEliminated = true;
+                                    });
+                                  },
+                                  iconSize: UIConstants.lifeCounterIconSize * 0.7,
+                                  color: Colors.redAccent,
+                                  style: IconButton.styleFrom(
+                                    backgroundColor:
+                                        UIConstants.buttonBackgroundDarkColor,
+                                  ),
+                                  tooltip: 'Eliminate Player',
+                                ),
+                            ],
+                          ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
                 ),
                 // Action buttons for opening overlays
-                Padding(
-                  padding: const EdgeInsets.all(UIConstants.buttonPaddingAll),
-                  child: Wrap(
-                    alignment: WrapAlignment.spaceEvenly,
-                    spacing: UIConstants.wrapSpacing,
-                    runSpacing: UIConstants.wrapRunSpacing,
-                    children: [
-                      ElevatedButton(
-                        onPressed: _toggleCommanderDamage,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: UIConstants.buttonBackgroundColor
-                              .withOpacity(UIConstants.buttonOpacity),
-                          foregroundColor: UIConstants.buttonForegroundColor,
+                Expanded(
+                  flex: 1,
+                  child: Padding(
+                    padding: const EdgeInsets.all(UIConstants.buttonPaddingAll),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _toggleCommanderDamage,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: UIConstants.buttonBackgroundColor
+                                  .withOpacity(UIConstants.buttonOpacity),
+                              foregroundColor: UIConstants.buttonForegroundColor,
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              minimumSize: Size.zero,
+                            ),
+                            child: const FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text('Cmdr Dmg'),
+                            ),
+                          ),
                         ),
-                        child: const Text('Cmdr Dmg'),
-                      ),
-                      ElevatedButton(
-                        onPressed: _toggleActions,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: UIConstants.buttonBackgroundColor
-                              .withOpacity(UIConstants.buttonOpacity),
-                          foregroundColor: UIConstants.buttonForegroundColor,
+                        const SizedBox(width: UIConstants.wrapSpacing),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _toggleActions,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: UIConstants.buttonBackgroundColor
+                                  .withOpacity(UIConstants.buttonOpacity),
+                              foregroundColor: UIConstants.buttonForegroundColor,
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              minimumSize: Size.zero,
+                            ),
+                            child: const FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text('Actions'),
+                            ),
+                          ),
                         ),
-                        child: const Text('Actions'),
-                      ),
-                      ElevatedButton(
-                        onPressed: _togglePlayerCounters,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: UIConstants.buttonBackgroundColor
-                              .withOpacity(UIConstants.buttonOpacity),
-                          foregroundColor: UIConstants.buttonForegroundColor,
+                        const SizedBox(width: UIConstants.wrapSpacing),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: _togglePlayerCounters,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: UIConstants.buttonBackgroundColor
+                                  .withOpacity(UIConstants.buttonOpacity),
+                              foregroundColor: UIConstants.buttonForegroundColor,
+                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                              minimumSize: Size.zero,
+                            ),
+                            child: const FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Text('Counters'),
+                            ),
+                          ),
                         ),
-                        child: const Text('Counters'),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
