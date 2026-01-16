@@ -721,8 +721,8 @@ class PlayerCardState extends State<PlayerCard> {
                   ),
                 ),
               ),
-            // Turn indicator and timer (shown if current player's turn and timer display is enabled)
-            if (widget.isCurrentTurn && widget.showTimerDisplay)
+            // Turn counter (always shown if current player's turn)
+            if (widget.isCurrentTurn)
               Positioned(
                 top: UIConstants.turnCounterPositionOffset,
                 right: (widget.playerIndex == 0 || widget.playerIndex == 2)
@@ -756,26 +756,29 @@ class PlayerCardState extends State<PlayerCard> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: UIConstants.turnCounterPadding,
-                        vertical: UIConstants.turnTimerVerticalPadding,
-                      ),
-                      decoration: BoxDecoration(
-                        color: UIConstants.turnCounterBackgroundColor,
-                        borderRadius: BorderRadius.circular(
-                          UIConstants.turnCounterBorderRadius,
+                    // Timer display (shown only if showTimerDisplay is true)
+                    if (widget.showTimerDisplay) ...[
+                      const SizedBox(height: 4),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: UIConstants.turnCounterPadding,
+                          vertical: UIConstants.turnTimerVerticalPadding,
+                        ),
+                        decoration: BoxDecoration(
+                          color: UIConstants.turnCounterBackgroundColor,
+                          borderRadius: BorderRadius.circular(
+                            UIConstants.turnCounterBorderRadius,
+                          ),
+                        ),
+                        child: Text(
+                          formatDuration(widget.currentTurnDuration),
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            color: UIConstants.turnCounterTextColor,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                      child: Text(
-                        formatDuration(widget.currentTurnDuration),
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: UIConstants.turnCounterTextColor,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                    ],
                   ],
                 ),
               ),

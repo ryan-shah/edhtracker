@@ -5,6 +5,8 @@ A simple and effective life tracker for four-player games of Magic: The Gatherin
 ## Features
 
 *   **Game Setup:** Configure commander names, starting life total, and the first player before the game begins.
+*   **Load Game:** Load a completed game from a JSON log file to review the game summary and statistics.
+*   **Game Summary:** A dedicated page to review detailed game statistics after a game is complete, including overall game stats and individual player performance.
 *   **Commander Autocomplete:** Search for commanders by name with autocomplete suggestions powered by Scryfall API.
 *   **Partner Commanders:** Support for partner commanders - select up to two commanders per player.
 *   **Unconventional Commanders:** Optional toggle to remove "is:commander" and "is:partner" filters for searching non-traditional commanders.
@@ -16,7 +18,7 @@ A simple and effective life tracker for four-player games of Magic: The Gatherin
 *   **Turn Counter:** A clear turn counter is displayed on the current player's card with turn progression controls.
 *   **Turn Timer:** Tracks the duration of the current turn, visible on the active player's card. The timer display can be toggled on or off from the central menu.
 *   **Undo Turn:** Go back to the previous turn state with a long-press on any player card. This reverts life totals, counters, and turn progression.
-*   **Game Logging:** Automatically records game state at the end of each turn, enabling the undo functionality.
+*   **Game Logging:** Automatically records game state at the end of each turn, enabling the undo functionality and game summary generation.
 *   **High-Contrast UI:** Important elements like turn indicators and action buttons use a high-contrast white and deep purple theme for excellent visibility.
 *   **Simple Interface:** A clean and intuitive interface, locked in landscape mode for easy viewing on a table.
 *   **Easy Reset:** A central reset button takes you back to the setup screen for a new game, with a confirmation dialog.
@@ -40,6 +42,7 @@ samples, guidance on mobile development, and a full API reference.
 *   **flutter_typeahead:** Provides autocomplete suggestions for commander search.
 *   **http:** Handles API requests to the Scryfall database.
 *   **shared_preferences:** Caches commander art images for offline access.
+*   **file_picker:** Allows users to pick files for loading game logs.
 
 ## Project Structure
 
@@ -48,13 +51,15 @@ samples, guidance on mobile development, and a full API reference.
 *   **main.dart:** Application entry point and main app configuration.
 *   **constants.dart:** Centralized UI constants for colors, spacing, and dimensions - modify here for global UI changes.
 *   **utils.dart:** Utility functions including name truncation and shared helpers.
-*   **game_logger.dart:** Handles logging of game state for features like undo.
+*   **game_logger.dart:** Handles logging of game state for features like undo and game summary.
 
 ### Pages
 
 *   **game_setup_page.dart:** Initial setup screen for configuring commanders, starting life, and first player.
 *   **life_tracker_page.dart:** The main screen for tracking game state.
-*   **help_page.dart:** A guide explaining the app's features.
+*   **game_summary_page.dart:** Displays detailed statistics of a completed game.
+*   **help_game_setup.dart:** A guide explaining the game setup features.
+*   **help_life_tracker.dart:** A guide explaining the life tracker features.
 
 ### Game Mechanics
 

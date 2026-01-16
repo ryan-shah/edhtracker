@@ -11,6 +11,7 @@ import 'constants.dart';
 /// - Starting life total selection
 /// - Starting player selection
 /// - Scryfall integration
+/// - Loading a game from a file
 class HelpGameSetup extends StatefulWidget {
   const HelpGameSetup({super.key});
 
@@ -45,6 +46,22 @@ class _HelpGameSetupState extends State<HelpGameSetup> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  _buildSectionTitle(context, 'Loading a Game'),
+                  _buildSection(context, [
+                    _buildSectionContent(
+                      'How to Load',
+                      'Tap the "Load Game" icon (upload file icon) in the top app bar to open a file picker. Select a previously saved game log (.json file) to load its data.',
+                    ),
+                    _buildSectionContent(
+                      'What It Does',
+                      'Loading a game log will take you directly to the Game Summary page for that game, allowing you to review all statistics from the completed session.',
+                    ),
+                    _buildSectionContent(
+                      'Art Fetching',
+                      'After loading the file, the app will automatically fetch the commander art for all players, ensuring the summary page is visually complete.',
+                    ),
+                  ]),
+                  const SizedBox(height: 24),
                   _buildSectionTitle(context, 'Unconventional Commanders'),
                   _buildSection(context, [
                     _buildSectionContent(

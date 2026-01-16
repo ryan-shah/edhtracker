@@ -10,6 +10,7 @@ import 'constants.dart';
 /// - Turn timer
 /// - Menu controls
 /// - Tracking tools (Commander Damage, Counters, Actions)
+/// - Game Summary and logging
 /// - Tips and best practices
 class HelpLifeTracker extends StatefulWidget {
   const HelpLifeTracker({super.key});
@@ -54,19 +55,49 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSectionTitle(context, 'Life Tracking'),
+                  _buildSectionTitle(context, 'Game Summary & Logging'),
                   _buildSection(context, [
                     _buildSectionContent(
-                      'Life Counter',
-                      'Each player\'s life total is displayed prominently in the center of their card. This is the primary focus of the tracker.',
+                      'Ending a Game',
+                      'When the game is finished, use the "Complete Game" button (check mark icon) in the central menu. This will end the game and take you to the Game Summary page.',
                     ),
                     _buildSectionContent(
-                      'Adjusting Life',
-                      'Tap the + button to increase life or the - button to decrease life. You can also enter a custom value by tapping directly on the life total.',
+                      'Game Summary Page',
+                      'This page provides a detailed breakdown of the completed game, including overall stats and individual player performance.',
                     ),
                     _buildSectionContent(
-                      'Commander Art Display',
-                      'If commanders were selected during setup, their card art will be displayed in the background of each player\'s card for visual reference.',
+                      'Switching Views',
+                      'Use the dropdown at the top of the summary page to switch between "Overall Game Stats" and detailed statistics for each player.',
+                    ),
+                    _buildSectionContent(
+                      'Downloading Game Logs',
+                      'On the summary page, tap the download icon in the app bar to save the entire game log as a JSON file. You can load this file later to review the game.',
+                    ),
+                  ]),
+                  const SizedBox(height: 24),
+                  _buildSectionTitle(context, 'Tracking Tools & Overlays'),
+                  _buildSection(context, [
+                     _buildToolSection(
+                      context,
+                      'Commander Damage (Cmdr Dmg)',
+                      'Track damage dealt by each opponent\'s commander. Tap the "Cmdr Dmg" button to open an overlay. Note: In standard EDH, 21 commander damage from a single commander causes that player to lose.',
+                      Icons.shield,
+                    ),
+                    _buildToolSection(
+                      context,
+                      'Counters',
+                      'Track player counters such as Energy, Experience, Poison, and Rad. Tap the "Counters" button to open an overlay where you can increment or decrement each counter type.',
+                      Icons.assessment,
+                    ),
+                    _buildToolSection(
+                      context,
+                      'Actions',
+                      'Track important game actions and events. The actions overlay is now scrollable to accommodate more trackers.\n' 
+                      '• Life Paid: Tracks life points paid for effects.\n'
+                      '• Cards Milled: Counts the number of cards milled.\n'
+                      '• Extra Turns: Tracks extra turns taken by the player.\n'
+                      '• Cards Drawn: Tracks cards drawn.',
+                      Icons.track_changes,
                     ),
                   ]),
                   const SizedBox(height: 24),
@@ -74,31 +105,15 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
                   _buildSection(context, [
                     _buildSectionContent(
                       'Current Turn Indicator',
-                      'The active player\'s card has a blue border and displays "Turn X" in the corner, where X is the current turn number.',
+                      'The active player\'s card has a bright border and displays the current turn number and a running timer.',
                     ),
                     _buildSectionContent(
                       'Advancing Turns',
-                      'Tap any player card to advance to the next player\'s turn. This moves the turn indicator and resets the turn timer.',
+                      'Tap the main area of any player card to advance to the next player\'s turn. This logs the previous turn\'s data and starts the next turn.',
                     ),
                     _buildSectionContent(
                       'Undoing Turns',
                       'Long-press any player card to undo the last turn progression. This reverts the game state to the beginning of the previous turn, including all tracked values.',
-                    ),
-                  ]),
-                  const SizedBox(height: 24),
-                  _buildSectionTitle(context, 'Turn Timer'),
-                  _buildSection(context, [
-                    _buildSectionContent(
-                      'Timer Display',
-                      'The active player\'s card displays a timer showing how long their current turn has been running. This helps monitor game pace.',
-                    ),
-                    _buildSectionContent(
-                      'Toggle Timer Visibility',
-                      'Use the timer button in the main menu (left icon) to toggle the timer display on or off. The timer still tracks time internally when hidden.',
-                    ),
-                    _buildSectionContent(
-                      'Timer Reset',
-                      'The timer automatically resets when advancing to the next player\'s turn.',
                     ),
                   ]),
                   const SizedBox(height: 24),
@@ -122,10 +137,10 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
                       'Toggles the visibility of the turn timer on the active player\'s card.',
                       Icons.timer,
                     ),
-                    _buildToolSection(
+                     _buildToolSection(
                       context,
                       'Complete Game Button (Bottom)',
-                      'Marks the current game as complete and logs the final game data.',
+                      'Marks the current game as complete and logs the final game data, taking you to the summary page.',
                       Icons.check_circle_outline,
                     ),
                     _buildToolSection(
@@ -136,53 +151,19 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
                     ),
                   ]),
                   const SizedBox(height: 24),
-                  _buildSectionTitle(context, 'Tracking Tools'),
-                  _buildSection(context, [
-                    _buildToolSection(
-                      context,
-                      'Commander Damage (Cmdr Dmg)',
-                      'Track damage dealt by each opponent\'s commander. Tap the "Cmdr Dmg" button to open an overlay. Note: In standard EDH, 21 commander damage from a single commander causes that player to lose.',
-                      Icons.shield,
-                    ),
-                    _buildToolSection(
-                      context,
-                      'Counters',
-                      'Track player counters such as Energy, Experience, Poison, and Rad. Tap the "Counters" button to open an overlay where you can increment or decrement each counter type.',
-                      Icons.assessment,
-                    ),
-                    _buildToolSection(
-                      context,
-                      'Actions',
-                      'Track important game actions and events:\n' 
-                      '• Life Paid: Tracks life points paid for effects (e.g., Necropotence, Phyrexian mana).\n'
-                      '• Cards Milled: Counts the number of cards milled from libraries.\n'
-                      '• Extra Turns: Tracks extra turns taken by the player.\n'
-                      '• Cards Drawn: Automatically increments at the start of each turn, but can be manually adjusted.',
-                      Icons.track_changes,
-                    ),
-                  ]),
-                  const SizedBox(height: 24),
                   _buildSectionTitle(context, 'Tips & Best Practices'),
                   _buildSection(context, [
                     _buildTipContent(
-                      'Quick Navigation',
-                      'Use a single tap to advance turns and long-press to undo. This is faster than using the menu.',
+                      'Data Logging',
+                      'All life changes, counter values, and actions are logged at the end of each turn when you tap to advance to the next player. This ensures the game summary is accurate.',
                     ),
                     _buildTipContent(
                       'Undo for Mistakes',
-                      'The undo feature reverts all game state changes from the current turn, including life totals and counter values. Use it to correct mistakes quickly.',
+                      'The undo feature reverts all game state changes from the current turn. Use it to correct mistakes quickly.',
                     ),
                     _buildTipContent(
                       'Overlay Management',
                       'Only one overlay can be visible at a time. Opening a new overlay will close any previously open one. Close overlays with the red X button.',
-                    ),
-                    _buildTipContent(
-                      'Life Paid Mechanics',
-                      'When you increment "Life Paid", it both adds to the life paid counter AND decrements your actual life total.',
-                    ),
-                    _buildTipContent(
-                      'Table Placement',
-                      'The app is locked in landscape mode for easy viewing when placed on a table during gameplay. This keeps the orientation stable.',
                     ),
                   ]),
                   const SizedBox(height: 24),
