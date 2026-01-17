@@ -289,7 +289,7 @@ class _GameSetupPageState extends State<GameSetupPage>
                   children: [
                     const SizedBox(height: 16),
                     DropdownButtonFormField<int>(
-                      value: _playerCount,
+                      initialValue: _playerCount,
                       decoration: const InputDecoration(
                         labelText: 'Number of Players',
                         border: OutlineInputBorder(),
@@ -398,7 +398,7 @@ class _GameSetupPageState extends State<GameSetupPage>
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<int>(
-                      value: _startingPlayerIndex,
+                      initialValue: _startingPlayerIndex,
                       decoration: const InputDecoration(
                         labelText: 'Starting Player',
                         border: OutlineInputBorder(),

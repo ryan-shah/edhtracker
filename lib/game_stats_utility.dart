@@ -486,78 +486,118 @@ class GameStatsUtility {
     );
   }
 
-  Map<String, Map<String, int>> _calculatePlayerActionStats(int playerIndex) {
+  Map<String, dynamic> _calculatePlayerActionStats(int playerIndex) {
     const actions = ['Life Paid', 'Cards Milled', 'Extra Turns', 'Cards Drawn'];
-    final stats = <String, Map<String, int>>{};
-    final playerTurnsCount = turnLog
-        .where((t) => t.activePlayerIndex == playerIndex)
-        .length;
+    final duringYourTurnStats = <String, Map<String, int>>{};
+    final duringOpponentTurnStats = <String, Map<String, int>>{};
 
+    int yourTurnsCount = 0;
+    int opponentTurnsCount = 0;
+
+    // Initialize stats maps for each action
     for (final action in actions) {
-      final key = action.toLowerCase().replaceAll(' ', '_');
-      int total = 0;
-      int maxVal = 0;
+      duringYourTurnStats[action] = {'max': 0, 'total': 0, 'average': 0};
+      duringOpponentTurnStats[action] = {'max': 0, 'total': 0, 'average': 0};
+    }
 
-      for (int i = 0; i < turnLog.length; i++) {
-        final turn = turnLog[i];
-        if (turn.activePlayerIndex != playerIndex) continue;
+    // Iterate through turns and collect action stats
+    for (int i = 0; i < turnLog.length; i++) {
+      final turn = turnLog[i];
+      final isYourTurn = turn.activePlayerIndex == playerIndex;
 
-        for (final playerState in turn.playerStates) {
-          final current = playerState.actionTrackers[key] ?? 0;
-          int increment = 0;
-          if (i == 0) {
-            increment = current;
-          } else {
-            final prev = turnLog[i - 1].playerStates.firstWhere(
-              (p) => p.playerIndex == playerState.playerIndex,
-            );
-            increment = current - (prev.actionTrackers[key] ?? 0);
-          }
-          if (increment > 0) {
-            total += increment;
-            maxVal = max(maxVal, increment);
-          }
+      if (isYourTurn) {
+        yourTurnsCount++;
+      } else {
+        opponentTurnsCount++;
+      }
+
+      // Find this player's state in the turn
+      final playerState = turn.playerStates.firstWhere(
+        (p) => p.playerIndex == playerIndex,
+      );
+
+      final targetMap = isYourTurn
+          ? duringYourTurnStats
+          : duringOpponentTurnStats;
+
+      // Track each action
+      for (final action in actions) {
+        final key = action.toLowerCase().replaceAll(' ', '_');
+        final current = playerState.actionTrackers[key] ?? 0;
+        int increment = 0;
+
+        if (i == 0) {
+          increment = current;
+        } else {
+          final previousState = turnLog[i - 1].playerStates.firstWhere(
+            (p) => p.playerIndex == playerIndex,
+          );
+          final previous = previousState.actionTrackers[key] ?? 0;
+          increment = current - previous;
+        }
+
+        if (increment > 0) {
+          targetMap[action]!['max'] = max(
+            targetMap[action]!['max']!,
+            increment,
+          );
+          targetMap[action]!['total'] =
+              targetMap[action]!['total']! + increment;
         }
       }
-
-      if (total > 0) {
-        stats[action] = {
-          'total': total,
-          'max': maxVal,
-          'average': playerTurnsCount > 0 ? total ~/ playerTurnsCount : 0,
-        };
-      }
     }
-    return stats;
+
+    // Calculate averages
+    for (final action in actions) {
+      duringYourTurnStats[action]!['average'] = yourTurnsCount > 0
+          ? duringYourTurnStats[action]!['total']! ~/ yourTurnsCount
+          : 0;
+      duringOpponentTurnStats[action]!['average'] = opponentTurnsCount > 0
+          ? duringOpponentTurnStats[action]!['total']! ~/ opponentTurnsCount
+          : 0;
+    }
+
+    return {
+      'duringYourTurn': duringYourTurnStats,
+      'duringOpponentTurn': duringOpponentTurnStats,
+      'yourTurnsCount': yourTurnsCount,
+      'opponentTurnsCount': opponentTurnsCount,
+    };
   }
 
   Map<String, dynamic> _calculatePlayerCounterStats(int playerIndex) {
-    final ownTurnsStats = <String, Map<String, int>>{};
-    final opponentTurnsStats = <String, Map<String, int>>{};
+    final duringYourTurnStats = <String, Map<String, int>>{};
+    final duringOpponentTurnStats = <String, Map<String, int>>{};
 
-    int ownTurnsCount = 0;
+    int yourTurnsCount = 0;
     int opponentTurnsCount = 0;
 
     for (final counterName in UIConstants.playerCounterTypes) {
-      ownTurnsStats[counterName] = {'max': 0, 'total': 0};
-      opponentTurnsStats[counterName] = {'max': 0, 'total': 0};
+      duringYourTurnStats[counterName] = {'max': 0, 'total': 0, 'average': 0};
+      duringOpponentTurnStats[counterName] = {
+        'max': 0,
+        'total': 0,
+        'average': 0,
+      };
     }
 
     for (final turn in turnLog) {
       final playerState = turn.playerStates.firstWhere(
         (p) => p.playerIndex == playerIndex,
       );
-      final isOwnTurn = turn.activePlayerIndex == playerIndex;
+      final isYourTurn = turn.activePlayerIndex == playerIndex;
 
-      if (isOwnTurn) {
-        ownTurnsCount++;
+      if (isYourTurn) {
+        yourTurnsCount++;
       } else {
         opponentTurnsCount++;
       }
 
       for (final counterName in UIConstants.playerCounterTypes) {
         final value = playerState.counters[counterName] ?? 0;
-        final targetMap = isOwnTurn ? ownTurnsStats : opponentTurnsStats;
+        final targetMap = isYourTurn
+            ? duringYourTurnStats
+            : duringOpponentTurnStats;
         targetMap[counterName]!['max'] = max(
           targetMap[counterName]!['max']!,
           value,
@@ -567,10 +607,21 @@ class GameStatsUtility {
       }
     }
 
+    // Calculate averages
+    for (final counterName in UIConstants.playerCounterTypes) {
+      duringYourTurnStats[counterName]!['average'] = yourTurnsCount > 0
+          ? duringYourTurnStats[counterName]!['total']! ~/ yourTurnsCount
+          : 0;
+      duringOpponentTurnStats[counterName]!['average'] = opponentTurnsCount > 0
+          ? duringOpponentTurnStats[counterName]!['total']! ~/
+                opponentTurnsCount
+          : 0;
+    }
+
     return {
-      'ownTurns': ownTurnsStats,
-      'opponentTurns': opponentTurnsStats,
-      'ownTurnsCount': ownTurnsCount,
+      'duringYourTurn': duringYourTurnStats,
+      'duringOpponentTurn': duringOpponentTurnStats,
+      'yourTurnsCount': yourTurnsCount,
       'opponentTurnsCount': opponentTurnsCount,
     };
   }
@@ -705,7 +756,7 @@ class PlayerStatsSummary {
   final int seatNumber;
   final PlayerTimeStats timeStats;
   final PlayerDamageStats damageStats;
-  final Map<String, Map<String, int>> actionStats;
+  final Map<String, dynamic> actionStats;
   final Map<String, dynamic> counterStats;
 
   PlayerStatsSummary({
@@ -719,14 +770,19 @@ class PlayerStatsSummary {
 
   Map<String, dynamic> toJson() {
     final actionJson = <String, dynamic>{};
-    actionStats.forEach((key, value) {
-      final snakeKey = 'total_${key.toLowerCase().replaceAll(' ', '_')}';
-      actionJson[snakeKey] = value['total'];
+    final duringYourTurn =
+        actionStats['duringYourTurn'] as Map<String, Map<String, int>>;
+    duringYourTurn.forEach((key, value) {
+      if (value['total']! > 0) {
+        actionJson['total_${key.toLowerCase().replaceAll(' ', '_')}'] =
+            value['total'];
+      }
     });
 
     final counterJson = <String, dynamic>{};
-    final ownTurns = counterStats['ownTurns'] as Map<String, Map<String, int>>;
-    ownTurns.forEach((key, value) {
+    final counterDuringYourTurn =
+        counterStats['duringYourTurn'] as Map<String, Map<String, int>>;
+    counterDuringYourTurn.forEach((key, value) {
       if (value['total']! > 0) {
         counterJson['total_${key.toLowerCase().replaceAll(' ', '_')}'] =
             value['total'];

@@ -125,7 +125,7 @@ class _PostGameReviewPageState extends State<PostGameReviewPage> {
             const SizedBox(height: 16),
             if (!_isDraw) ...[
               DropdownButtonFormField<int>(
-                value: _winnerIndex,
+                initialValue: _winnerIndex,
                 decoration: const InputDecoration(
                   labelText: 'Game Winner',
                   border: OutlineInputBorder(),
@@ -147,7 +147,7 @@ class _PostGameReviewPageState extends State<PostGameReviewPage> {
               const SizedBox(height: 16),
               // Added dropdown for user seat selection
               DropdownButtonFormField<int>(
-                value: _userSeat,
+                initialValue: _userSeat,
                 decoration: const InputDecoration(
                   labelText: 'Your Seat',
                   border: OutlineInputBorder(),
@@ -168,7 +168,7 @@ class _PostGameReviewPageState extends State<PostGameReviewPage> {
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
-                value: _winCondition,
+                initialValue: _winCondition,
                 decoration: const InputDecoration(
                   labelText: 'Win Condition',
                   border: OutlineInputBorder(),

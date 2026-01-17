@@ -1,0 +1,165 @@
+{
+  "game_session": {
+    "session_id": "edh-1678886400000",
+    "start_time": "2023-03-15T12:00:00.000Z",
+    "end_time": "2023-03-15T12:30:00.000Z",
+    "starting_life": 40,
+    "total_turns": 10,
+    "players": [
+      {
+        "seat_number": 1,
+        "commanders": ["Commander A", "Commander B"]
+      },
+      {
+        "seat_number": 2,
+        "commanders": ["Commander C", "Commander D"]
+      },
+      {
+        "seat_number": 3,
+        "commanders": ["Commander E", "Commander F"]
+      },
+      {
+        "seat_number": 4,
+        "commanders": ["Commander G", "Commander H"]
+      }
+    ]
+  },
+  "player_stats": [
+    {
+      "seat_number": 1,
+      "time_stats": {
+        "total_duration": "05:00",
+        "average_duration": "01:15",
+        "longest_duration": "02:30",
+        "turn_count": 4
+      },
+      "damage_stats": {
+        "total_damage": 120,
+        "max_damage_in_turn": 40,
+        "average_damage": 30,
+        "total_commander_damage": 60,
+        "max_commander_damage_in_turn": 20,
+        "average_commander_damage": 15
+      },
+      "action_stats": {
+        "total_life_paid": 10,
+        "total_cards_milled": 5,
+        "total_extra_turns": 1,
+        "total_cards_drawn": 2
+      },
+      "counter_stats": {
+        "total_energy": 100,
+        "total_charge": 50
+      }
+    },
+    {
+      "seat_number": 2,
+      "time_stats": {
+        "total_duration": "04:00",
+        "average_duration": "01:00",
+        "longest_duration": "01:45",
+        "turn_count": 4
+      },
+      "damage_stats": {
+        "total_damage": 100,
+        "max_damage_in_turn": 35,
+        "average_damage": 25,
+        "total_commander_damage": 50,
+        "max_commander_damage_in_turn": 18,
+        "average_commander_damage": 12
+      },
+      "action_stats": {
+        "total_life_paid": 8,
+        "total_cards_milled": 3,
+        "total_extra_turns": 0,
+        "total_cards_drawn": 1
+      },
+      "counter_stats": {
+        "total_energy": 80,
+        "total_charge": 40
+      }
+    },
+    {
+      "seat_number": 3,
+      "time_stats": {
+        "total_duration": "03:00",
+        "average_duration": "00:45",
+        "longest_duration": "01:00",
+        "turn_count": 4
+      },
+      "damage_stats": {
+        "total_damage": 80,
+        "max_damage_in_turn": 30,
+        "average_damage": 20,
+        "total_commander_damage": 40,
+        "max_commander_damage_in_turn": 15,
+        "average_commander_damage": 10
+      },
+      "action_stats": {
+        "total_life_paid": 5,
+        "total_cards_milled": 2,
+        "total_extra_turns": 0,
+        "total_cards_drawn": 0
+      },
+      "counter_stats": {
+        "total_energy": 60,
+        "total_charge": 30
+      }
+    },
+    {
+      "seat_number": 4,
+      "time_stats": {
+        "total_duration": "02:00",
+        "average_duration": "00:30",
+        "longest_duration": "00:40",
+        "turn_count": 4
+      },
+      "damage_stats": {
+        "total_damage": 60,
+        "max_damage_in_turn": 25,
+        "average_damage": 15,
+        "total_commander_damage": 30,
+        "max_commander_damage_in_turn": 12,
+        "average_commander_damage": 7
+      },
+      "action_stats": {
+        "total_life_paid": 3,
+        "total_cards_milled": 1,
+        "total_extra_turns": 0,
+        "total_cards_drawn": 0
+      },
+      "counter_stats": {
+        "total_energy": 40,
+        "total_charge": 20
+      }
+    }
+  ],
+  "review_details": {
+    "is_draw": false,
+    "winner_seat_number": 1,
+    "win_condition": "infinite combo",
+    "key_cards": [
+      "Card A",
+      "Card B"
+    ],
+    "fast_mana_players": [
+      {
+        "player_index": 0,
+        "had_fast_mana": true
+      },
+      {
+        "player_index": 1,
+        "had_fast_mana": false
+      },
+      {
+        "player_index": 2,
+        "had_fast_mana": true
+      },
+      {
+        "player_index": 3,
+        "had_fast_mana": false
+      }
+    ],
+    "user_seat": 2
+  }
+}
