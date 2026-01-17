@@ -563,25 +563,52 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
     final actionStats = playerStats.actionStats;
     if (actionStats.isEmpty) return const SizedBox.shrink();
 
+    final duringYourTurn =
+        actionStats['duringYourTurn'] as Map<String, Map<String, int>>;
+    final duringOpponentTurn =
+        actionStats['duringOpponentTurn'] as Map<String, Map<String, int>>;
+
     final stats = <Map<String, String>>[];
-    actionStats.forEach((action, data) {
-      stats.add({
-        'label': '$action (Avg)',
-        'value': '${data['average']}',
-        'detail': 'Total: ${data['total']}',
-      });
-      stats.add({
-        'label': '$action (Max)',
-        'value': '${data['max']}',
-        'detail': 'Total: ${data['total']}',
-      });
+
+    // Add own turn stats
+    duringYourTurn.forEach((action, data) {
+      if (data['total']! > 0) {
+        stats.add({
+          'label': '$action (Own - Avg)',
+          'value': '${data['average']}',
+          'detail': 'Total: ${data['total']}',
+        });
+        stats.add({
+          'label': '$action (Own - Max)',
+          'value': '${data['max']}',
+          'detail': 'Total: ${data['total']}',
+        });
+      }
     });
+
+    // Add opponent turn stats
+    duringOpponentTurn.forEach((action, data) {
+      if (data['total']! > 0) {
+        stats.add({
+          'label': '$action (Opp - Avg)',
+          'value': '${data['average']}',
+          'detail': 'Total: ${data['total']}',
+        });
+        stats.add({
+          'label': '$action (Opp - Max)',
+          'value': '${data['max']}',
+          'detail': 'Total: ${data['total']}',
+        });
+      }
+    });
+
+    if (stats.isEmpty) return const SizedBox.shrink();
 
     return _buildPlayerStatsSection(
       context,
       session,
       playerIndex,
-      'Action Stats (During Their Turns)',
+      'Action Stats',
       stats,
     );
   }
@@ -595,17 +622,17 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
     final counterStats = playerStats.counterStats;
     final stats = <Map<String, String>>[];
 
-    final ownTurns = counterStats['ownTurns'] as Map<String, Map<String, int>>;
-    final opponentTurns =
-        counterStats['opponentTurns'] as Map<String, Map<String, int>>;
-    final ownCount = counterStats['ownTurnsCount'] as int;
-    final oppCount = counterStats['opponentTurnsCount'] as int;
+    final duringYourTurn =
+        counterStats['duringYourTurn'] as Map<String, Map<String, int>>;
+    final duringOpponentTurn =
+        counterStats['duringOpponentTurn'] as Map<String, Map<String, int>>;
 
-    ownTurns.forEach((counterName, data) {
+    // Add own turn stats
+    duringYourTurn.forEach((counterName, data) {
       if (data['total']! > 0) {
         stats.add({
           'label': '$counterName (Own - Avg)',
-          'value': '${ownCount > 0 ? data['total']! ~/ ownCount : 0}',
+          'value': '${data['average']}',
           'detail': 'Total: ${data['total']}',
         });
         stats.add({
@@ -616,11 +643,12 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
       }
     });
 
-    opponentTurns.forEach((counterName, data) {
+    // Add opponent turn stats
+    duringOpponentTurn.forEach((counterName, data) {
       if (data['total']! > 0) {
         stats.add({
           'label': '$counterName (Opp - Avg)',
-          'value': '${oppCount > 0 ? data['total']! ~/ oppCount : 0}',
+          'value': '${data['average']}',
           'detail': 'Total: ${data['total']}',
         });
         stats.add({
@@ -632,6 +660,7 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
     });
 
     if (stats.isEmpty) return const SizedBox.shrink();
+
     return _buildPlayerStatsSection(
       context,
       session,

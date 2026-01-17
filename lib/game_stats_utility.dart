@@ -769,23 +769,61 @@ class PlayerStatsSummary {
   });
 
   Map<String, dynamic> toJson() {
+    // Build action stats JSON with both own turn and opponent turn breakdowns
     final actionJson = <String, dynamic>{};
     final duringYourTurn =
         actionStats['duringYourTurn'] as Map<String, Map<String, int>>;
-    duringYourTurn.forEach((key, value) {
-      if (value['total']! > 0) {
-        actionJson['total_${key.toLowerCase().replaceAll(' ', '_')}'] =
-            value['total'];
+    final duringOpponentTurn =
+        actionStats['duringOpponentTurn'] as Map<String, Map<String, int>>;
+    final yourTurnsCount = actionStats['yourTurnsCount'] as int;
+    final opponentTurnsCount = actionStats['opponentTurnsCount'] as int;
+
+    duringYourTurn.forEach((action, data) {
+      final actionKey = action.toLowerCase().replaceAll(' ', '_');
+      if (data['total']! > 0) {
+        actionJson['${actionKey}_during_own_turn'] = {
+          'total': data['total'],
+          'max': data['max'],
+          'average': data['average'],
+        };
       }
     });
 
+    duringOpponentTurn.forEach((action, data) {
+      final actionKey = action.toLowerCase().replaceAll(' ', '_');
+      if (data['total']! > 0) {
+        actionJson['${actionKey}_during_opponent_turn'] = {
+          'total': data['total'],
+          'max': data['max'],
+          'average': data['average'],
+        };
+      }
+    });
+
+    // Build counter stats JSON with both own turn and opponent turn breakdowns
     final counterJson = <String, dynamic>{};
     final counterDuringYourTurn =
         counterStats['duringYourTurn'] as Map<String, Map<String, int>>;
-    counterDuringYourTurn.forEach((key, value) {
-      if (value['total']! > 0) {
-        counterJson['total_${key.toLowerCase().replaceAll(' ', '_')}'] =
-            value['total'];
+    final counterDuringOpponentTurn =
+        counterStats['duringOpponentTurn'] as Map<String, Map<String, int>>;
+
+    counterDuringYourTurn.forEach((counterName, data) {
+      if (data['total']! > 0) {
+        counterJson['${counterName.toLowerCase()}_during_own_turn'] = {
+          'total': data['total'],
+          'max': data['max'],
+          'average': data['average'],
+        };
+      }
+    });
+
+    counterDuringOpponentTurn.forEach((counterName, data) {
+      if (data['total']! > 0) {
+        counterJson['${counterName.toLowerCase()}_during_opponent_turn'] = {
+          'total': data['total'],
+          'max': data['max'],
+          'average': data['average'],
+        };
       }
     });
 
@@ -793,8 +831,16 @@ class PlayerStatsSummary {
       'seat_number': seatNumber,
       'time_stats': timeStats.toJson(),
       'damage_stats': damageStats.toJson(),
-      'action_stats': actionJson,
-      'counter_stats': counterJson,
+      'action_stats': {
+        'own_turn_count': yourTurnsCount,
+        'opponent_turn_count': opponentTurnsCount,
+        'actions': actionJson,
+      },
+      'counter_stats': {
+        'own_turn_count': counterStats['yourTurnsCount'] as int,
+        'opponent_turn_count': counterStats['opponentTurnsCount'] as int,
+        'counters': counterJson,
+      },
     };
   }
 }

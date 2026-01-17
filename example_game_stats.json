@@ -42,14 +42,71 @@
         "average_commander_damage": 15
       },
       "action_stats": {
-        "total_life_paid": 10,
-        "total_cards_milled": 5,
-        "total_extra_turns": 1,
-        "total_cards_drawn": 2
+        "own_turn_count": 4,
+        "opponent_turn_count": 6,
+        "actions": {
+          "life_paid_during_own_turn": {
+            "total": 10,
+            "max": 5,
+            "average": 2
+          },
+          "life_paid_during_opponent_turn": {
+            "total": 8,
+            "max": 3,
+            "average": 1
+          },
+          "cards_milled_during_own_turn": {
+            "total": 5,
+            "max": 3,
+            "average": 1
+          },
+          "cards_milled_during_opponent_turn": {
+            "total": 2,
+            "max": 1,
+            "average": 0
+          },
+          "extra_turns_during_own_turn": {
+            "total": 1,
+            "max": 1,
+            "average": 0
+          },
+          "cards_drawn_during_own_turn": {
+            "total": 2,
+            "max": 1,
+            "average": 0
+          },
+          "cards_drawn_during_opponent_turn": {
+            "total": 3,
+            "max": 2,
+            "average": 0
+          }
+        }
       },
       "counter_stats": {
-        "total_energy": 100,
-        "total_charge": 50
+        "own_turn_count": 4,
+        "opponent_turn_count": 6,
+        "counters": {
+          "energy_during_own_turn": {
+            "total": 100,
+            "max": 40,
+            "average": 25
+          },
+          "energy_during_opponent_turn": {
+            "total": 60,
+            "max": 20,
+            "average": 10
+          },
+          "charge_during_own_turn": {
+            "total": 50,
+            "max": 20,
+            "average": 12
+          },
+          "charge_during_opponent_turn": {
+            "total": 30,
+            "max": 10,
+            "average": 5
+          }
+        }
       }
     },
     {
@@ -69,14 +126,66 @@
         "average_commander_damage": 12
       },
       "action_stats": {
-        "total_life_paid": 8,
-        "total_cards_milled": 3,
-        "total_extra_turns": 0,
-        "total_cards_drawn": 1
+        "own_turn_count": 4,
+        "opponent_turn_count": 6,
+        "actions": {
+          "life_paid_during_own_turn": {
+            "total": 8,
+            "max": 4,
+            "average": 2
+          },
+          "life_paid_during_opponent_turn": {
+            "total": 6,
+            "max": 2,
+            "average": 1
+          },
+          "cards_milled_during_own_turn": {
+            "total": 3,
+            "max": 2,
+            "average": 0
+          },
+          "cards_milled_during_opponent_turn": {
+            "total": 1,
+            "max": 1,
+            "average": 0
+          },
+          "cards_drawn_during_own_turn": {
+            "total": 1,
+            "max": 1,
+            "average": 0
+          },
+          "cards_drawn_during_opponent_turn": {
+            "total": 2,
+            "max": 1,
+            "average": 0
+          }
+        }
       },
       "counter_stats": {
-        "total_energy": 80,
-        "total_charge": 40
+        "own_turn_count": 4,
+        "opponent_turn_count": 6,
+        "counters": {
+          "energy_during_own_turn": {
+            "total": 80,
+            "max": 35,
+            "average": 20
+          },
+          "energy_during_opponent_turn": {
+            "total": 50,
+            "max": 15,
+            "average": 8
+          },
+          "charge_during_own_turn": {
+            "total": 40,
+            "max": 18,
+            "average": 10
+          },
+          "charge_during_opponent_turn": {
+            "total": 25,
+            "max": 8,
+            "average": 4
+          }
+        }
       }
     },
     {
@@ -96,14 +205,56 @@
         "average_commander_damage": 10
       },
       "action_stats": {
-        "total_life_paid": 5,
-        "total_cards_milled": 2,
-        "total_extra_turns": 0,
-        "total_cards_drawn": 0
+        "own_turn_count": 4,
+        "opponent_turn_count": 6,
+        "actions": {
+          "life_paid_during_own_turn": {
+            "total": 5,
+            "max": 3,
+            "average": 1
+          },
+          "life_paid_during_opponent_turn": {
+            "total": 4,
+            "max": 2,
+            "average": 0
+          },
+          "cards_milled_during_own_turn": {
+            "total": 2,
+            "max": 1,
+            "average": 0
+          },
+          "cards_milled_during_opponent_turn": {
+            "total": 1,
+            "max": 1,
+            "average": 0
+          }
+        }
       },
       "counter_stats": {
-        "total_energy": 60,
-        "total_charge": 30
+        "own_turn_count": 4,
+        "opponent_turn_count": 6,
+        "counters": {
+          "energy_during_own_turn": {
+            "total": 60,
+            "max": 25,
+            "average": 15
+          },
+          "energy_during_opponent_turn": {
+            "total": 40,
+            "max": 12,
+            "average": 6
+          },
+          "charge_during_own_turn": {
+            "total": 30,
+            "max": 15,
+            "average": 7
+          },
+          "charge_during_opponent_turn": {
+            "total": 20,
+            "max": 6,
+            "average": 3
+          }
+        }
       }
     },
     {
@@ -123,14 +274,51 @@
         "average_commander_damage": 7
       },
       "action_stats": {
-        "total_life_paid": 3,
-        "total_cards_milled": 1,
-        "total_extra_turns": 0,
-        "total_cards_drawn": 0
+        "own_turn_count": 4,
+        "opponent_turn_count": 6,
+        "actions": {
+          "life_paid_during_own_turn": {
+            "total": 3,
+            "max": 2,
+            "average": 0
+          },
+          "life_paid_during_opponent_turn": {
+            "total": 2,
+            "max": 1,
+            "average": 0
+          },
+          "cards_milled_during_own_turn": {
+            "total": 1,
+            "max": 1,
+            "average": 0
+          }
+        }
       },
       "counter_stats": {
-        "total_energy": 40,
-        "total_charge": 20
+        "own_turn_count": 4,
+        "opponent_turn_count": 6,
+        "counters": {
+          "energy_during_own_turn": {
+            "total": 40,
+            "max": 18,
+            "average": 10
+          },
+          "energy_during_opponent_turn": {
+            "total": 30,
+            "max": 10,
+            "average": 5
+          },
+          "charge_during_own_turn": {
+            "total": 20,
+            "max": 10,
+            "average": 5
+          },
+          "charge_during_opponent_turn": {
+            "total": 15,
+            "max": 5,
+            "average": 2
+          }
+        }
       }
     }
   ],

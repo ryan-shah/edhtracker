@@ -622,7 +622,7 @@ class PlayerCardState extends State<PlayerCard> {
                 child: CounterOverlay(
                   items: [
                     // Generate items for commander damage from each player
-                    for (int p = 0; p < 4; p++)
+                    for (int p = 0; p < widget.allCommanderNames.length; p++)
                       ...List.generate(widget.allCommanderNames[p].length, (c) {
                         final commanderName = widget.allCommanderNames[p][c];
                         final key = '${p}_$c';
