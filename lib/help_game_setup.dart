@@ -33,10 +33,7 @@ class _HelpGameSetupState extends State<HelpGameSetup> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Game Setup Help'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Game Setup Help'), centerTitle: true),
       body: SingleChildScrollView(
         child: Center(
           child: ConstrainedBox(
@@ -167,7 +164,9 @@ class _HelpGameSetupState extends State<HelpGameSetup> {
     return Container(
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
-        border: Border.all(color: UIConstants.buttonForegroundColor.withOpacity(0.3)),
+        border: Border.all(
+          color: UIConstants.buttonForegroundColor.withValues(alpha: 0.3),
+        ),
         borderRadius: BorderRadius.circular(8.0),
       ),
       child: Column(
@@ -190,16 +189,10 @@ class _HelpGameSetupState extends State<HelpGameSetup> {
       children: [
         Text(
           title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
         const SizedBox(height: 4.0),
-        Text(
-          description,
-          style: const TextStyle(fontSize: 13),
-        ),
+        Text(description, style: const TextStyle(fontSize: 13)),
       ],
     );
   }
@@ -214,7 +207,7 @@ class _HelpGameSetupState extends State<HelpGameSetup> {
           child: Icon(
             Icons.lightbulb_outline,
             size: 16,
-            color: UIConstants.buttonForegroundColor.withOpacity(0.7),
+            color: UIConstants.buttonForegroundColor.withValues(alpha: 0.7),
           ),
         ),
         Expanded(
@@ -229,10 +222,7 @@ class _HelpGameSetupState extends State<HelpGameSetup> {
                 ),
               ),
               const SizedBox(height: 2.0),
-              Text(
-                description,
-                style: const TextStyle(fontSize: 13),
-              ),
+              Text(description, style: const TextStyle(fontSize: 13)),
             ],
           ),
         ),

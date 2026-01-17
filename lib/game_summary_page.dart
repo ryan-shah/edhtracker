@@ -389,7 +389,6 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
 
   Widget _buildActionStatsGrid(BuildContext context, GameSession session) {
     final actionStats = _statsUtility.overallActionStats;
-    if (actionStats == null) return const SizedBox.shrink();
 
     final stats = <Map<String, dynamic>>[];
 
@@ -439,8 +438,9 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
 
   Widget _buildCounterStatsGrid(BuildContext context, GameSession session) {
     final counterStats = _statsUtility.overallCounterStats;
-    if (counterStats == null || counterStats.isEmpty)
+    if (counterStats.isEmpty) {
       return const SizedBox.shrink();
+    }
 
     final stats = <Map<String, dynamic>>[];
     counterStats.forEach((counterName, data) {
@@ -677,63 +677,85 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
   }
 
   Widget _buildNewGameButtons(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {
-              final session = widget.gameLogger.getSession();
-              final initialPlayerNames = <String>[];
-              final initialPartnerNames = <String>[];
-              final initialHasPartner = <bool>[];
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: _showNewGameDialog,
+        child: const Text('New Game'),
+      ),
+    );
+  }
 
-              for (int i = 0; i < session.playerCommanderNames.length; i++) {
-                final commanders = session.playerCommanderNames[i];
-                if (commanders.length > 1) {
-                  initialPlayerNames.add(commanders[0]);
-                  initialPartnerNames.add(commanders[1]);
-                  initialHasPartner.add(true);
-                } else {
-                  final name = commanders[0];
-                  if (name.startsWith('Player ')) {
-                    initialPlayerNames.add('');
+  void _showNewGameDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('New Game?'),
+          content: const Text(
+            'Return to the setup screen to start a new game.',
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('New Game with Same Players'),
+              onPressed: () {
+                final session = widget.gameLogger.getSession();
+                final List<String> initialPlayerNames = [];
+                final List<String> initialPartnerNames = [];
+                final List<bool> initialHasPartner = [];
+
+                for (int i = 0; i < session.playerCommanderNames.length; i++) {
+                  final commanders = session.playerCommanderNames[i];
+                  if (commanders.length > 1) {
+                    initialPlayerNames.add(commanders[0]);
+                    initialPartnerNames.add(commanders[1]);
+                    initialHasPartner.add(true);
                   } else {
-                    initialPlayerNames.add(name);
+                    final name = commanders[0];
+                    if (name.startsWith('Player ')) {
+                      initialPlayerNames.add('');
+                    } else {
+                      initialPlayerNames.add(name);
+                    }
+                    initialPartnerNames.add('');
+                    initialHasPartner.add(false);
                   }
-                  initialPartnerNames.add('');
-                  initialHasPartner.add(false);
                 }
-              }
 
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(
-                  builder: (context) => GameSetupPage(
-                    initialPlayerNames: initialPlayerNames,
-                    initialPartnerNames: initialPartnerNames,
-                    initialHasPartner: initialHasPartner,
-                    initialUnconventionalCommanders:
-                        session.unconventionalCommanders,
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (context) => GameSetupPage(
+                      initialPlayerNames: initialPlayerNames,
+                      initialPartnerNames: initialPartnerNames,
+                      initialHasPartner: initialHasPartner,
+                      initialUnconventionalCommanders:
+                          session.unconventionalCommanders,
+                    ),
                   ),
-                ),
-                (route) => false,
-              );
-            },
-            child: const Text('Same Players'),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const GameSetupPage()),
-                (route) => false,
-              );
-            },
-            child: const Text('New Game'),
-          ),
-        ),
-      ],
+                  (route) => false,
+                );
+              },
+            ),
+            TextButton(
+              child: const Text('New Game (Clear Players)'),
+              onPressed: () {
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(
+                    builder: (context) => const GameSetupPage(),
+                  ),
+                  (route) => false,
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'constants.dart';
 
 /// Help page for the Life Tracker screen.
@@ -42,10 +43,7 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Life Tracker Help'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Life Tracker Help'), centerTitle: true),
       body: SingleChildScrollView(
         child: Center(
           child: ConstrainedBox(
@@ -77,7 +75,7 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
                   const SizedBox(height: 24),
                   _buildSectionTitle(context, 'Tracking Tools & Overlays'),
                   _buildSection(context, [
-                     _buildToolSection(
+                    _buildToolSection(
                       context,
                       'Commander Damage (Cmdr Dmg)',
                       'Track damage dealt by each opponent\'s commander. Tap the "Cmdr Dmg" button to open an overlay. Note: In standard EDH, 21 commander damage from a single commander causes that player to lose.',
@@ -92,11 +90,11 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
                     _buildToolSection(
                       context,
                       'Actions',
-                      'Track important game actions and events. The actions overlay is now scrollable to accommodate more trackers.\n' 
-                      '• Life Paid: Tracks life points paid for effects.\n'
-                      '• Cards Milled: Counts the number of cards milled.\n'
-                      '• Extra Turns: Tracks extra turns taken by the player.\n'
-                      '• Cards Drawn: Tracks cards drawn.',
+                      'Track important game actions and events. The actions overlay is now scrollable to accommodate more trackers.\n'
+                          '• Life Paid: Tracks life points paid for effects.\n'
+                          '• Cards Milled: Counts the number of cards milled.\n'
+                          '• Extra Turns: Tracks extra turns taken by the player.\n'
+                          '• Cards Drawn: Tracks cards drawn.',
                       Icons.track_changes,
                     ),
                   ]),
@@ -137,7 +135,7 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
                       'Toggles the visibility of the turn timer on the active player\'s card.',
                       Icons.timer,
                     ),
-                     _buildToolSection(
+                    _buildToolSection(
                       context,
                       'Complete Game Button (Bottom)',
                       'Marks the current game as complete and logs the final game data, taking you to the summary page.',
@@ -192,7 +190,9 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
     return Container(
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
-        border: Border.all(color: UIConstants.buttonForegroundColor.withOpacity(0.3)),
+        border: Border.all(
+          color: UIConstants.buttonForegroundColor.withValues(alpha: 0.3),
+        ),
         borderRadius: BorderRadius.circular(8.0),
       ),
       child: Column(
@@ -215,16 +215,10 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
       children: [
         Text(
           title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
         const SizedBox(height: 4.0),
-        Text(
-          description,
-          style: const TextStyle(fontSize: 13),
-        ),
+        Text(description, style: const TextStyle(fontSize: 13)),
       ],
     );
   }
@@ -241,11 +235,7 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
       children: [
         Row(
           children: [
-            Icon(
-              icon,
-              size: 20,
-              color: UIConstants.buttonForegroundColor,
-            ),
+            Icon(icon, size: 20, color: UIConstants.buttonForegroundColor),
             const SizedBox(width: 8.0),
             Expanded(
               child: Text(
@@ -259,10 +249,7 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
           ],
         ),
         const SizedBox(height: 4.0),
-        Text(
-          description,
-          style: const TextStyle(fontSize: 13),
-        ),
+        Text(description, style: const TextStyle(fontSize: 13)),
       ],
     );
   }
@@ -277,7 +264,7 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
           child: Icon(
             Icons.lightbulb_outline,
             size: 16,
-            color: UIConstants.buttonForegroundColor.withOpacity(0.7),
+            color: UIConstants.buttonForegroundColor.withValues(alpha: 0.7),
           ),
         ),
         Expanded(
@@ -292,10 +279,7 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
                 ),
               ),
               const SizedBox(height: 2.0),
-              Text(
-                description,
-                style: const TextStyle(fontSize: 13),
-              ),
+              Text(description, style: const TextStyle(fontSize: 13)),
             ],
           ),
         ),

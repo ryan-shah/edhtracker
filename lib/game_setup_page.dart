@@ -340,7 +340,7 @@ class _GameSetupPageState extends State<GameSetupPage>
                     }),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<int>(
-                      value: _startingLife,
+                      initialValue: _startingLife,
                       decoration: const InputDecoration(
                         labelText: 'Starting Life Total',
                         border: OutlineInputBorder(),
@@ -358,7 +358,7 @@ class _GameSetupPageState extends State<GameSetupPage>
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<int>(
-                      value: _startingPlayerIndex,
+                      initialValue: _startingPlayerIndex,
                       decoration: const InputDecoration(
                         labelText: 'Starting Player',
                         border: OutlineInputBorder(),

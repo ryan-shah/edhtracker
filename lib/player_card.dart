@@ -2,10 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'constants.dart';
 import 'counter_overlay.dart';
-import 'utils.dart';
 import 'game_logger.dart'; // Import the new game logger
+import 'utils.dart';
 
-/// Stateless widget that represents the configuration for a player card.
 ///
 /// Contains all the data needed to display and manage a player's game state,
 /// including commander information, starting life total, and callbacks for
@@ -351,7 +350,8 @@ class PlayerCardState extends State<PlayerCard> {
       commanderDamageList.add(
         CommanderDamageTaken(
           sourcePlayerIndex: int.parse(parts[0]),
-          commanderName: widget.allCommanderNames[int.parse(parts[0])][int.parse(parts[1])],
+          commanderName: widget
+              .allCommanderNames[int.parse(parts[0])][int.parse(parts[1])],
           damage: value,
         ),
       );
@@ -480,7 +480,8 @@ class PlayerCardState extends State<PlayerCard> {
                           ),
                           Padding(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: UIConstants.lifeCounterPaddingHorizontal,
+                              horizontal:
+                                  UIConstants.lifeCounterPaddingHorizontal,
                             ),
                             child: Text(
                               '$_life',
@@ -490,9 +491,10 @@ class PlayerCardState extends State<PlayerCard> {
                                     fontWeight: FontWeight.bold,
                                     shadows: [
                                       Shadow(
-                                        blurRadius:
-                                            UIConstants.lifeCounterShadowBlurRadius,
-                                        color: UIConstants.lifeCounterShadowColor,
+                                        blurRadius: UIConstants
+                                            .lifeCounterShadowBlurRadius,
+                                        color:
+                                            UIConstants.lifeCounterShadowColor,
                                         offset: const Offset(
                                           UIConstants.lifeCounterShadowOffsetX,
                                           UIConstants.lifeCounterShadowOffsetY,
@@ -525,7 +527,8 @@ class PlayerCardState extends State<PlayerCard> {
                                       _isEliminated = true;
                                     });
                                   },
-                                  iconSize: UIConstants.lifeCounterIconSize * 0.7,
+                                  iconSize:
+                                      UIConstants.lifeCounterIconSize * 0.7,
                                   color: Colors.redAccent,
                                   style: IconButton.styleFrom(
                                     backgroundColor:
@@ -553,9 +556,12 @@ class PlayerCardState extends State<PlayerCard> {
                             onPressed: _toggleCommanderDamage,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: UIConstants.buttonBackgroundColor
-                                  .withOpacity(UIConstants.buttonOpacity),
-                              foregroundColor: UIConstants.buttonForegroundColor,
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  .withValues(alpha: UIConstants.buttonOpacity),
+                              foregroundColor:
+                                  UIConstants.buttonForegroundColor,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
                               minimumSize: Size.zero,
                             ),
                             child: const FittedBox(
@@ -570,9 +576,12 @@ class PlayerCardState extends State<PlayerCard> {
                             onPressed: _toggleActions,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: UIConstants.buttonBackgroundColor
-                                  .withOpacity(UIConstants.buttonOpacity),
-                              foregroundColor: UIConstants.buttonForegroundColor,
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  .withValues(alpha: UIConstants.buttonOpacity),
+                              foregroundColor:
+                                  UIConstants.buttonForegroundColor,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
                               minimumSize: Size.zero,
                             ),
                             child: const FittedBox(
@@ -587,9 +596,12 @@ class PlayerCardState extends State<PlayerCard> {
                             onPressed: _togglePlayerCounters,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: UIConstants.buttonBackgroundColor
-                                  .withOpacity(UIConstants.buttonOpacity),
-                              foregroundColor: UIConstants.buttonForegroundColor,
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
+                                  .withValues(alpha: UIConstants.buttonOpacity),
+                              foregroundColor:
+                                  UIConstants.buttonForegroundColor,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
                               minimumSize: Size.zero,
                             ),
                             child: const FittedBox(
@@ -689,15 +701,11 @@ class PlayerCardState extends State<PlayerCard> {
                     });
                   },
                   child: Container(
-                    color: Colors.black.withOpacity(0.7),
+                    color: Colors.black.withValues(alpha: 0.7),
                     child: const Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(
-                          Icons.person_off,
-                          color: Colors.white,
-                          size: 64,
-                        ),
+                        Icon(Icons.person_off, color: Colors.white, size: 64),
                         SizedBox(height: 8),
                         Text(
                           'ELIMINATED',
@@ -711,11 +719,8 @@ class PlayerCardState extends State<PlayerCard> {
                         SizedBox(height: 4),
                         Text(
                           'Tap to Dismiss',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 12,
-                          ),
-                          ),
+                          style: TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
                       ],
                     ),
                   ),
@@ -732,7 +737,8 @@ class PlayerCardState extends State<PlayerCard> {
                     ? UIConstants.turnCounterPositionOffset
                     : null,
                 child: Column(
-                  crossAxisAlignment: (widget.playerIndex == 0 || widget.playerIndex == 2)
+                  crossAxisAlignment:
+                      (widget.playerIndex == 0 || widget.playerIndex == 2)
                       ? CrossAxisAlignment.end
                       : CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
@@ -750,10 +756,11 @@ class PlayerCardState extends State<PlayerCard> {
                       ),
                       child: Text(
                         'Turn ${widget.turnCount}',
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: UIConstants.turnCounterTextColor,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              color: UIConstants.turnCounterTextColor,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                     ),
                     // Timer display (shown only if showTimerDisplay is true)
@@ -772,10 +779,11 @@ class PlayerCardState extends State<PlayerCard> {
                         ),
                         child: Text(
                           formatDuration(widget.currentTurnDuration),
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: UIConstants.turnCounterTextColor,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                color: UIConstants.turnCounterTextColor,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                       ),
                     ],

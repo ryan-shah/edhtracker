@@ -389,8 +389,9 @@ class GameStatsUtility {
 
         if (i == 0) {
           for (final cmdDamage in playerState.commanderDamageTaken) {
-            if (cmdDamage.sourcePlayerIndex == playerIndex)
+            if (cmdDamage.sourcePlayerIndex == playerIndex) {
               turnCommanderDamage += cmdDamage.damage;
+            }
           }
         } else {
           final previousState = turnLog[i - 1].playerStates.firstWhere(
@@ -496,10 +497,11 @@ class GameStatsUtility {
       );
       final isOwnTurn = turn.activePlayerIndex == playerIndex;
 
-      if (isOwnTurn)
+      if (isOwnTurn) {
         ownTurnsCount++;
-      else
+      } else {
         opponentTurnsCount++;
+      }
 
       for (final counterName in UIConstants.playerCounterTypes) {
         final value = playerState.counters[counterName] ?? 0;

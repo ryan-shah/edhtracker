@@ -29,14 +29,20 @@ class GameSession {
   factory GameSession.fromJson(Map<String, dynamic> json) {
     return GameSession(
       playerNames: List<String>.from(json['players'].map((p) => p['name'])),
-      playerCommanderNames: List<List<String>>.from(json['players'].map((p) => List<String>.from(p['commanders']))),
-      playerArtUrls: [], // Player art URLs are not stored in the JSON, so we provide an empty list.
+      playerCommanderNames: List<List<String>>.from(
+        json['players'].map((p) => List<String>.from(p['commanders'])),
+      ),
+      playerArtUrls:
+          [], // Player art URLs are not stored in the JSON, so we provide an empty list.
       startingLife: json['starting_life'],
       // The startingPlayerIndex from JSON is now a fallback, not the primary source
       startingPlayerIndex: json['players'][0]['player_index'],
-      unconventionalCommanders: false, // This information is not stored in the JSON.
+      unconventionalCommanders:
+          false, // This information is not stored in the JSON.
       startTime: DateTime.parse(json['start_time']),
-      endTime: json['end_time'] != null ? DateTime.parse(json['end_time']) : null,
+      endTime: json['end_time'] != null
+          ? DateTime.parse(json['end_time'])
+          : null,
     );
   }
 
@@ -113,7 +119,11 @@ class PlayerStateSnapshot {
       counters: Map<String, int>.from(json['counters']),
       actionTrackers: Map<String, int>.from(json['action_trackers']),
       commanderDamageTaken: List<CommanderDamageTaken>.from(
-          json['commander_damage_taken']?.map((e) => CommanderDamageTaken.fromJson(e)) ?? []),
+        json['commander_damage_taken']?.map(
+              (e) => CommanderDamageTaken.fromJson(e),
+            ) ??
+            [],
+      ),
       isEliminated: json['is_eliminated'],
     );
   }
@@ -153,7 +163,8 @@ class TurnLogEntry {
       turnNumber: json['turn_number'],
       activePlayerIndex: json['active_player_index'],
       playerStates: List<PlayerStateSnapshot>.from(
-          json['player_states'].map((e) => PlayerStateSnapshot.fromJson(e))),
+        json['player_states'].map((e) => PlayerStateSnapshot.fromJson(e)),
+      ),
       turnStartTime: DateTime.parse(json['turn_start_time']),
       turnEndTime: DateTime.parse(json['turn_end_time']),
     );
@@ -184,27 +195,29 @@ class GameLogger {
     required int startingPlayerIndex,
     required bool unconventionalCommanders,
   }) : _session = GameSession(
-    playerNames: playerNames,
-    playerCommanderNames: playerCommanderNames,
-    playerArtUrls: playerArtUrls,
-    startingLife: startingLife,
-    startingPlayerIndex: startingPlayerIndex,
-    unconventionalCommanders: unconventionalCommanders,
-    startTime: DateTime.now(),
-    endTime: null, // Initialize endTime to null
-  ),
-        _lastTurnEndTime = DateTime.now(); // Initialize _lastTurnEndTime
+         playerNames: playerNames,
+         playerCommanderNames: playerCommanderNames,
+         playerArtUrls: playerArtUrls,
+         startingLife: startingLife,
+         startingPlayerIndex: startingPlayerIndex,
+         unconventionalCommanders: unconventionalCommanders,
+         startTime: DateTime.now(),
+         endTime: null, // Initialize endTime to null
+       ),
+       _lastTurnEndTime = DateTime.now(); // Initialize _lastTurnEndTime
 
   factory GameLogger.fromJson(String jsonString) {
     final Map<String, dynamic> gameData = jsonDecode(jsonString);
     final GameSession session = GameSession.fromJson(gameData['game_session']);
     final List<TurnLogEntry> turnLog = List<TurnLogEntry>.from(
-        gameData['turn_log'].map((e) => TurnLogEntry.fromJson(e)));
+      gameData['turn_log'].map((e) => TurnLogEntry.fromJson(e)),
+    );
 
     // Determine the starting player index from the first turn's active player index
     final int startingPlayerIndex = turnLog.isNotEmpty
         ? turnLog.first.activePlayerIndex
-        : session.startingPlayerIndex; // Fallback to existing session data if no turns
+        : session
+              .startingPlayerIndex; // Fallback to existing session data if no turns
 
     final DateTime lastTurnEndTime = turnLog.isNotEmpty
         ? turnLog.last.turnEndTime
@@ -216,7 +229,8 @@ class GameLogger {
       playerCommanderNames: session.playerCommanderNames,
       playerArtUrls: session.playerArtUrls,
       startingLife: session.startingLife,
-      startingPlayerIndex: startingPlayerIndex, // Use the determined starting player index
+      startingPlayerIndex:
+          startingPlayerIndex, // Use the determined starting player index
       unconventionalCommanders: session.unconventionalCommanders,
       startTime: session.startTime,
       endTime: session.endTime,
@@ -229,15 +243,13 @@ class GameLogger {
     );
   }
 
-
   GameLogger._reconstruct({
     required GameSession session,
     required List<TurnLogEntry> turnLog,
     required DateTime lastTurnEndTime,
-  })  : _session = session,
-        _turnLog = turnLog,
-        _lastTurnEndTime = lastTurnEndTime;
-
+  }) : _session = session,
+       _turnLog = turnLog,
+       _lastTurnEndTime = lastTurnEndTime;
 
   /// Records the state of all players at the end of a turn.
   void recordTurn(
@@ -297,17 +309,6 @@ class GameLogger {
     final jsonOutput = jsonEncode(gameData);
 
     return jsonOutput;
-  }
-
-  void logData() {
-    print(_session.toJson());
-    for (final turn in _turnLog) {
-      print(turn.toJson());
-    }
-  }
-
-  void logLastTurn() {
-    print(_turnLog.last.toJson());
   }
 
   GameSession getSession() {
