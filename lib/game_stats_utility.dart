@@ -22,6 +22,7 @@ class GameStatsUtility {
   String? _winCondition;
   List<String> _keyCards = [];
   List<bool> _fastManaPlayers = [];
+  int? _userSeat; // Added field for user seat
 
   GameStatsUtility(this.gameLogger)
     : session = gameLogger.getSession(),
@@ -67,12 +68,14 @@ class GameStatsUtility {
     String? winCondition,
     List<String> keyCards,
     List<bool> fastManaPlayers,
+    int? userSeat, // Added parameter for user seat
   ) {
     _isDraw = isDraw;
     _winnerIndex = winnerIndex;
     _winCondition = winCondition;
     _keyCards = keyCards;
     _fastManaPlayers = fastManaPlayers;
+    _userSeat = userSeat; // Store user seat
   }
 
   String toJsonString() {
@@ -115,7 +118,9 @@ class GameStatsUtility {
         _winnerIndex != null ||
         _winCondition != null ||
         _keyCards.isNotEmpty ||
-        _fastManaPlayers.any((e) => e)) {
+        _fastManaPlayers.any((e) => e) ||
+        _userSeat != null) {
+      // Check if userSeat is available
       jsonOutput['review_details'] = {
         'is_draw': _isDraw,
         if (!_isDraw)
@@ -128,6 +133,8 @@ class GameStatsUtility {
             'had_fast_mana': _fastManaPlayers[index],
           };
         }),
+        if (_userSeat != null) // Add userSeat if not null
+          'user_seat': playerIndexToSeatNumber[_userSeat],
       };
     }
 

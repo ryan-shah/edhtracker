@@ -17,6 +17,7 @@ class _PostGameReviewPageState extends State<PostGameReviewPage> {
   bool _isDraw = false;
   int? _winnerIndex;
   String? _winCondition;
+  int? _userSeat; // Added state variable for user seat
   final List<TextEditingController> _keyCardControllers = List.generate(
     3,
     (_) => TextEditingController(),
@@ -43,8 +44,10 @@ class _PostGameReviewPageState extends State<PostGameReviewPage> {
       widget.gameStatsUtility.session.playerNames.length,
       (_) => false,
     );
+    // Initialize userSeat to the first player if players exist
     if (widget.gameStatsUtility.session.playerNames.isNotEmpty) {
       _winnerIndex = 0;
+      _userSeat = 0; // Initialize userSeat
     }
   }
 
@@ -57,6 +60,7 @@ class _PostGameReviewPageState extends State<PostGameReviewPage> {
   }
 
   void _handleSubmitReview() async {
+    // Ensure _userSeat is passed to setReviewDetails
     widget.gameStatsUtility.setReviewDetails(
       _isDraw,
       _winnerIndex,
@@ -66,6 +70,7 @@ class _PostGameReviewPageState extends State<PostGameReviewPage> {
           .where((text) => text.isNotEmpty)
           .toList(),
       _fastMana,
+      _userSeat, // Pass the user seat
     );
 
     final String reviewJson = widget.gameStatsUtility.toJsonString();
@@ -138,6 +143,28 @@ class _PostGameReviewPageState extends State<PostGameReviewPage> {
                   },
                 ),
                 onChanged: (val) => setState(() => _winnerIndex = val),
+              ),
+              const SizedBox(height: 16),
+              // Added dropdown for user seat selection
+              DropdownButtonFormField<int>(
+                value: _userSeat,
+                decoration: const InputDecoration(
+                  labelText: 'Your Seat',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.person),
+                ),
+                items: List.generate(
+                  widget.gameStatsUtility.session.playerNames.length,
+                  (index) {
+                    return DropdownMenuItem(
+                      value: index,
+                      child: Text(
+                        widget.gameStatsUtility.session.playerNames[index],
+                      ),
+                    );
+                  },
+                ),
+                onChanged: (val) => setState(() => _userSeat = val),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<String>(
