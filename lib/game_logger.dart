@@ -11,6 +11,7 @@ class GameSession {
   final List<List<String>> playerArtUrls;
   final int startingLife;
   final int startingPlayerIndex;
+  final int playerCount;
   final bool unconventionalCommanders;
   final DateTime startTime;
   DateTime? endTime; // Added endTime
@@ -21,6 +22,7 @@ class GameSession {
     required this.playerArtUrls,
     required this.startingLife,
     required this.startingPlayerIndex,
+    required this.playerCount,
     required this.unconventionalCommanders,
     required this.startTime,
     this.endTime, // Initialize endTime to null
@@ -37,6 +39,7 @@ class GameSession {
       startingLife: json['starting_life'],
       // The startingPlayerIndex from JSON is now a fallback, not the primary source
       startingPlayerIndex: json['players'][0]['player_index'],
+      playerCount: json['player_count'] ?? json['players'].length,
       unconventionalCommanders:
           false, // This information is not stored in the JSON.
       startTime: DateTime.parse(json['start_time']),
@@ -50,6 +53,7 @@ class GameSession {
     final Map<String, dynamic> json = {
       'start_time': startTime.toIso8601String(),
       'starting_life': startingLife,
+      'player_count': playerCount,
       'players': List.generate(playerNames.length, (index) {
         return {
           'player_index': index,
@@ -193,6 +197,7 @@ class GameLogger {
     required List<List<String>> playerArtUrls,
     required int startingLife,
     required int startingPlayerIndex,
+    required int playerCount,
     required bool unconventionalCommanders,
   }) : _session = GameSession(
          playerNames: playerNames,
@@ -200,6 +205,7 @@ class GameLogger {
          playerArtUrls: playerArtUrls,
          startingLife: startingLife,
          startingPlayerIndex: startingPlayerIndex,
+         playerCount: playerCount,
          unconventionalCommanders: unconventionalCommanders,
          startTime: DateTime.now(),
          endTime: null, // Initialize endTime to null
@@ -231,6 +237,7 @@ class GameLogger {
       startingLife: session.startingLife,
       startingPlayerIndex:
           startingPlayerIndex, // Use the determined starting player index
+      playerCount: session.playerCount,
       unconventionalCommanders: session.unconventionalCommanders,
       startTime: session.startTime,
       endTime: session.endTime,

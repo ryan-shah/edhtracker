@@ -1,4 +1,5 @@
 import 'dart:async'; // Import for Timer
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -14,6 +15,7 @@ class LifeTrackerPage extends StatefulWidget {
   final List<List<String>> playerArtUrls;
   final int startingLife;
   final int startingPlayerIndex;
+  final int playerCount;
   final bool unconventionalCommanders;
 
   const LifeTrackerPage({
@@ -23,6 +25,7 @@ class LifeTrackerPage extends StatefulWidget {
     required this.playerArtUrls,
     required this.startingLife,
     required this.startingPlayerIndex,
+    this.playerCount = 4,
     this.unconventionalCommanders = false,
   });
 
@@ -39,7 +42,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
   int _turnCount = 1;
   bool _menuOpen = false;
   // Timer visibility state moved to PlayerCard, but this controls if timer *ticks* and is *passed down*
-  late bool _isTimerEnabled; 
+  late bool _isTimerEnabled;
   late GameLogger _gameLogger; // Declare GameLogger instance
 
   // Turn tracking for timer
@@ -66,6 +69,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
       playerArtUrls: widget.playerArtUrls,
       startingLife: widget.startingLife,
       startingPlayerIndex: widget.startingPlayerIndex,
+      playerCount: widget.playerCount,
       unconventionalCommanders: widget.unconventionalCommanders,
     );
 
@@ -87,7 +91,9 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
     _turnTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) {
         setState(() {
-          _currentTurnDuration = DateTime.now().difference(_currentTurnStartTime);
+          _currentTurnDuration = DateTime.now().difference(
+            _currentTurnStartTime,
+          );
         });
       }
     });
@@ -148,6 +154,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                       initialHasPartner: initialHasPartner,
                       initialUnconventionalCommanders:
                           widget.unconventionalCommanders,
+                      initialPlayerCount: widget.playerCount,
                     ),
                   ),
                   (route) => false,
@@ -197,14 +204,17 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
               onPressed: () {
                 Navigator.of(context).pop();
                 _turnTimer?.cancel(); // Cancel timer on game end
-                _gameLogger.recordTurn(_currentPlayerIndex, _turnCount, _playerCardKeys);
+                _gameLogger.recordTurn(
+                  _currentPlayerIndex,
+                  _turnCount,
+                  _playerCardKeys,
+                );
                 _gameLogger.endGame(); // Call endGame method
                 // Navigate to game summary page
                 Navigator.of(context).pushAndRemoveUntil(
                   MaterialPageRoute(
-                    builder: (context) => GameSummaryPage(
-                      gameLogger: _gameLogger,
-                    ),
+                    builder: (context) =>
+                        GameSummaryPage(gameLogger: _gameLogger),
                   ),
                   (route) => false,
                 );
@@ -227,14 +237,19 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
       // Record the state *before* advancing the turn
       _gameLogger.recordTurn(_currentPlayerIndex, _turnCount, _playerCardKeys);
 
-      _currentPlayerIndex = (_currentPlayerIndex + 1) % 4;
+      // Advance to the next active player (skip inactive players for 3-player games)
+      do {
+        _currentPlayerIndex = (_currentPlayerIndex + 1) % 4;
+      } while (_currentPlayerIndex >= widget.playerCount);
+
       if (_currentPlayerIndex == widget.startingPlayerIndex) {
         _turnCount++;
       }
       // Increment cardsDrawn for the next player
       _playerCardKeys[_currentPlayerIndex].currentState?.incrementCardsDrawn();
 
-      _currentTurnStartTime = DateTime.now(); // Reset turn start time for the new turn
+      _currentTurnStartTime =
+          DateTime.now(); // Reset turn start time for the new turn
       _currentTurnDuration = Duration.zero; // Reset duration
       _startTurnTimer(); // Restart the timer for the new turn
     });
@@ -280,92 +295,9 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
         builder: (context, constraints) {
           final isPortrait = constraints.maxHeight > constraints.maxWidth;
 
-          final playerCardsWidget = Column(
-            children: [
-              Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: RotatedBox(
-                        quarterTurns: 2,
-                        child: PlayerCard(
-                          key: _playerCardKeys[0],
-                          playerIndex: 0,
-                          playerName: widget.playerNames[0],
-                          allCommanderNames: widget.playerCommanderNames,
-                          backgroundUrls: widget.playerArtUrls[0],
-                          startingLife: widget.startingLife,
-                          isCurrentTurn: _currentPlayerIndex == 0,
-                          onTurnEnd: _nextTurn,
-                          onTurnBack: _previousTurn,
-                          turnCount: _turnCount,
-                          currentTurnDuration: _currentPlayerIndex == 0 ? _currentTurnDuration : Duration.zero,
-                          showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: RotatedBox(
-                        quarterTurns: 2,
-                        child: PlayerCard(
-                          key: _playerCardKeys[1],
-                          playerIndex: 1,
-                          playerName: widget.playerNames[1],
-                          allCommanderNames: widget.playerCommanderNames,
-                          backgroundUrls: widget.playerArtUrls[1],
-                          startingLife: widget.startingLife,
-                          isCurrentTurn: _currentPlayerIndex == 1,
-                          onTurnEnd: _nextTurn,
-                          onTurnBack: _previousTurn,
-                          turnCount: _turnCount,
-                          currentTurnDuration: _currentPlayerIndex == 1 ? _currentTurnDuration : Duration.zero,
-                          showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Expanded(
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: PlayerCard(
-                        key: _playerCardKeys[3],
-                        playerIndex: 3,
-                        playerName: widget.playerNames[3],
-                        allCommanderNames: widget.playerCommanderNames,
-                        backgroundUrls: widget.playerArtUrls[3],
-                        startingLife: widget.startingLife,
-                        isCurrentTurn: _currentPlayerIndex == 3,
-                        onTurnEnd: _nextTurn,
-                        onTurnBack: _previousTurn,
-                        turnCount: _turnCount,
-                        currentTurnDuration: _currentPlayerIndex == 3 ? _currentTurnDuration : Duration.zero,
-                        showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
-                      ),
-                    ),
-                    Expanded(
-                      child: PlayerCard(
-                        key: _playerCardKeys[2],
-                        playerIndex: 2,
-                        playerName: widget.playerNames[2],
-                        allCommanderNames: widget.playerCommanderNames,
-                        backgroundUrls: widget.playerArtUrls[2],
-                        startingLife: widget.startingLife,
-                        isCurrentTurn: _currentPlayerIndex == 2,
-                        onTurnEnd: _nextTurn,
-                        onTurnBack: _previousTurn,
-                        turnCount: _turnCount,
-                        currentTurnDuration: _currentPlayerIndex == 2 ? _currentTurnDuration : Duration.zero,
-                        showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
+          final playerCardsWidget = widget.playerCount == 3
+              ? _buildThreePlayerLayout()
+              : _buildFourPlayerLayout();
 
           final lifeTrackerWidget = isPortrait
               ? RotatedBox(quarterTurns: 1, child: playerCardsWidget)
@@ -450,7 +382,11 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                             heroTag: 'timer_button',
                             mini: true,
                             onPressed: _toggleTimerDisplay, // Use new method
-                            child: _isTimerEnabled ? const Icon(Icons.timer_outlined) : const Icon(Icons.timer_off_outlined), // Update icon based on state
+                            child: _isTimerEnabled
+                                ? const Icon(Icons.timer_outlined)
+                                : const Icon(
+                                    Icons.timer_off_outlined,
+                                  ), // Update icon based on state
                           ),
                         ),
                       ),
@@ -473,6 +409,199 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildFourPlayerLayout() {
+    return Column(
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              Expanded(
+                child: RotatedBox(
+                  quarterTurns: 2,
+                  child: PlayerCard(
+                    key: _playerCardKeys[0],
+                    playerIndex: 0,
+                    playerName: widget.playerNames[0],
+                    allCommanderNames: widget.playerCommanderNames,
+                    backgroundUrls: widget.playerArtUrls[0],
+                    startingLife: widget.startingLife,
+                    isCurrentTurn: _currentPlayerIndex == 0,
+                    onTurnEnd: _nextTurn,
+                    onTurnBack: _previousTurn,
+                    turnCount: _turnCount,
+                    currentTurnDuration: _currentPlayerIndex == 0
+                        ? _currentTurnDuration
+                        : Duration.zero,
+                    showTimerDisplay:
+                        _isTimerEnabled, // Pass timer enabled state
+                  ),
+                ),
+              ),
+              Expanded(
+                child: RotatedBox(
+                  quarterTurns: 2,
+                  child: PlayerCard(
+                    key: _playerCardKeys[1],
+                    playerIndex: 1,
+                    playerName: widget.playerNames[1],
+                    allCommanderNames: widget.playerCommanderNames,
+                    backgroundUrls: widget.playerArtUrls[1],
+                    startingLife: widget.startingLife,
+                    isCurrentTurn: _currentPlayerIndex == 1,
+                    onTurnEnd: _nextTurn,
+                    onTurnBack: _previousTurn,
+                    turnCount: _turnCount,
+                    currentTurnDuration: _currentPlayerIndex == 1
+                        ? _currentTurnDuration
+                        : Duration.zero,
+                    showTimerDisplay:
+                        _isTimerEnabled, // Pass timer enabled state
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Row(
+            children: [
+              Expanded(
+                child: PlayerCard(
+                  key: _playerCardKeys[3],
+                  playerIndex: 3,
+                  playerName: widget.playerNames[3],
+                  allCommanderNames: widget.playerCommanderNames,
+                  backgroundUrls: widget.playerArtUrls[3],
+                  startingLife: widget.startingLife,
+                  isCurrentTurn: _currentPlayerIndex == 3,
+                  onTurnEnd: _nextTurn,
+                  onTurnBack: _previousTurn,
+                  turnCount: _turnCount,
+                  currentTurnDuration: _currentPlayerIndex == 3
+                      ? _currentTurnDuration
+                      : Duration.zero,
+                  showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
+                ),
+              ),
+              Expanded(
+                child: PlayerCard(
+                  key: _playerCardKeys[2],
+                  playerIndex: 2,
+                  playerName: widget.playerNames[2],
+                  allCommanderNames: widget.playerCommanderNames,
+                  backgroundUrls: widget.playerArtUrls[2],
+                  startingLife: widget.startingLife,
+                  isCurrentTurn: _currentPlayerIndex == 2,
+                  onTurnEnd: _nextTurn,
+                  onTurnBack: _previousTurn,
+                  turnCount: _turnCount,
+                  currentTurnDuration: _currentPlayerIndex == 2
+                      ? _currentTurnDuration
+                      : Duration.zero,
+                  showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildThreePlayerLayout() {
+    return Column(
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              Expanded(
+                child: RotatedBox(
+                  quarterTurns: 2,
+                  child: PlayerCard(
+                    key: _playerCardKeys[0],
+                    playerIndex: 0,
+                    playerName: widget.playerNames[0],
+                    allCommanderNames: widget.playerCommanderNames,
+                    backgroundUrls: widget.playerArtUrls[0],
+                    startingLife: widget.startingLife,
+                    isCurrentTurn: _currentPlayerIndex == 0,
+                    onTurnEnd: _nextTurn,
+                    onTurnBack: _previousTurn,
+                    turnCount: _turnCount,
+                    currentTurnDuration: _currentPlayerIndex == 0
+                        ? _currentTurnDuration
+                        : Duration.zero,
+                    showTimerDisplay:
+                        _isTimerEnabled, // Pass timer enabled state
+                  ),
+                ),
+              ),
+              Expanded(
+                child: RotatedBox(
+                  quarterTurns: 2,
+                  child: PlayerCard(
+                    key: _playerCardKeys[1],
+                    playerIndex: 1,
+                    playerName: widget.playerNames[1],
+                    allCommanderNames: widget.playerCommanderNames,
+                    backgroundUrls: widget.playerArtUrls[1],
+                    startingLife: widget.startingLife,
+                    isCurrentTurn: _currentPlayerIndex == 1,
+                    onTurnEnd: _nextTurn,
+                    onTurnBack: _previousTurn,
+                    turnCount: _turnCount,
+                    currentTurnDuration: _currentPlayerIndex == 1
+                        ? _currentTurnDuration
+                        : Duration.zero,
+                    showTimerDisplay:
+                        _isTimerEnabled, // Pass timer enabled state
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Row(
+            children: [
+              Expanded(
+                child: PlayerCard(
+                  key: _playerCardKeys[2],
+                  playerIndex: 2,
+                  playerName: widget.playerNames[2],
+                  allCommanderNames: widget.playerCommanderNames,
+                  backgroundUrls: widget.playerArtUrls[2],
+                  startingLife: widget.startingLife,
+                  isCurrentTurn: _currentPlayerIndex == 2,
+                  onTurnEnd: _nextTurn,
+                  onTurnBack: _previousTurn,
+                  turnCount: _turnCount,
+                  currentTurnDuration: _currentPlayerIndex == 2
+                      ? _currentTurnDuration
+                      : Duration.zero,
+                  showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
+                ),
+              ),
+              // Empty container with dark overlay for player 4 slot in 3-player game
+              Expanded(
+                child: Container(
+                  color: Colors.black87,
+                  child: const Center(
+                    child: Text(
+                      'Player 4 Slot\n(Not Active)',
+                      style: TextStyle(color: Colors.white54, fontSize: 14),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -18,6 +19,7 @@ class GameSetupPage extends StatefulWidget {
   final List<String>? initialPartnerNames;
   final List<bool>? initialHasPartner;
   final bool? initialUnconventionalCommanders;
+  final int? initialPlayerCount;
 
   const GameSetupPage({
     super.key,
@@ -25,6 +27,7 @@ class GameSetupPage extends StatefulWidget {
     this.initialPartnerNames,
     this.initialHasPartner,
     this.initialUnconventionalCommanders,
+    this.initialPlayerCount,
   });
 
   @override
@@ -32,13 +35,15 @@ class GameSetupPage extends StatefulWidget {
 }
 
 class _GameSetupPageState extends State<GameSetupPage>
-    with SingleTickerProviderStateMixin { // Corrected mixin
+    with SingleTickerProviderStateMixin {
+  // Corrected mixin
 
   final _playerNames = List.generate(4, (i) => TextEditingController());
   final _partnerNames = List.generate(4, (i) => TextEditingController());
   final _hasPartner = List.generate(4, (i) => false);
   int _startingLife = 40;
   int _startingPlayerIndex = -1;
+  int _playerCount = 4;
   bool _isLoading = false;
   bool _unconventionalCommanders = false;
 
@@ -61,7 +66,9 @@ class _GameSetupPageState extends State<GameSetupPage>
         _partnerNames[i].text = widget.initialPartnerNames![i];
         _hasPartner[i] = widget.initialHasPartner![i];
       }
-      _unconventionalCommanders = widget.initialUnconventionalCommanders ?? false;
+      _unconventionalCommanders =
+          widget.initialUnconventionalCommanders ?? false;
+      _playerCount = widget.initialPlayerCount ?? 4;
     }
 
     for (var controller in _playerNames) {
@@ -92,7 +99,7 @@ class _GameSetupPageState extends State<GameSetupPage>
     final playerCommanderNames = <List<String>>[];
     final playerArtUrls = <List<String>>[];
 
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < _playerCount; i++) {
       final primary = _playerNames[i].text;
       final partner = _partnerNames[i].text;
       final currentArtUrls = <String>[];
@@ -120,8 +127,8 @@ class _GameSetupPageState extends State<GameSetupPage>
 
     final startingLife = _startingLife;
     var startingPlayerIndex = _startingPlayerIndex;
-    if (startingPlayerIndex == -1) {
-      startingPlayerIndex = Random().nextInt(4);
+    if (startingPlayerIndex == -1 || startingPlayerIndex >= _playerCount) {
+      startingPlayerIndex = Random().nextInt(_playerCount);
     }
 
     if (!mounted) return;
@@ -139,6 +146,7 @@ class _GameSetupPageState extends State<GameSetupPage>
           playerArtUrls: playerArtUrls,
           startingLife: startingLife,
           startingPlayerIndex: startingPlayerIndex,
+          playerCount: _playerCount,
           unconventionalCommanders: _unconventionalCommanders,
         ),
       ),
@@ -158,7 +166,7 @@ class _GameSetupPageState extends State<GameSetupPage>
 
       try {
         final PlatformFile file = result.files.single;
-        
+
         // Read file content - handle both bytes and path
         String jsonString;
         if (file.bytes != null) {
@@ -169,7 +177,9 @@ class _GameSetupPageState extends State<GameSetupPage>
           final fileContent = await File(file.path!).readAsString();
           jsonString = fileContent;
         } else {
-          throw Exception('Unable to read file: neither bytes nor path available');
+          throw Exception(
+            'Unable to read file: neither bytes nor path available',
+          );
         }
 
         final gameLogger = GameLogger.fromJson(jsonString);
@@ -278,6 +288,31 @@ class _GameSetupPageState extends State<GameSetupPage>
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: 16),
+                    DropdownButtonFormField<int>(
+                      value: _playerCount,
+                      decoration: const InputDecoration(
+                        labelText: 'Number of Players',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: [3, 4].map((count) {
+                        return DropdownMenuItem(
+                          value: count,
+                          child: Text('$count Players'),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() {
+                            _playerCount = value;
+                            // Reset starting player index if it's out of range
+                            if (_startingPlayerIndex >= _playerCount) {
+                              _startingPlayerIndex = -1;
+                            }
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
                     Row(
                       children: [
                         Expanded(
@@ -294,7 +329,7 @@ class _GameSetupPageState extends State<GameSetupPage>
                         ),
                       ],
                     ),
-                    ...List.generate(4, (i) {
+                    ...List.generate(_playerCount, (i) {
                       return Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
                         child: Column(
@@ -305,7 +340,8 @@ class _GameSetupPageState extends State<GameSetupPage>
                                   child: CommanderAutocomplete(
                                     controller: _playerNames[i],
                                     labelText: 'Player ${i + 1} Commander',
-                                    unconventionalCommanders: _unconventionalCommanders,
+                                    unconventionalCommanders:
+                                        _unconventionalCommanders,
                                   ),
                                 ),
                                 const SizedBox(width: 8),
@@ -331,9 +367,10 @@ class _GameSetupPageState extends State<GameSetupPage>
                                 controller: _partnerNames[i],
                                 labelText: 'Partner Commander',
                                 isPartner: true,
-                                unconventionalCommanders: _unconventionalCommanders,
+                                unconventionalCommanders:
+                                    _unconventionalCommanders,
                               ),
-                            ]
+                            ],
                           ],
                         ),
                       );
@@ -346,7 +383,10 @@ class _GameSetupPageState extends State<GameSetupPage>
                         border: OutlineInputBorder(),
                       ),
                       items: List.generate(10, (i) => (i + 1) * 10).map((life) {
-                        return DropdownMenuItem(value: life, child: Text('$life'));
+                        return DropdownMenuItem(
+                          value: life,
+                          child: Text('$life'),
+                        );
                       }).toList(),
                       onChanged: (value) {
                         if (value != null) {
@@ -358,7 +398,7 @@ class _GameSetupPageState extends State<GameSetupPage>
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<int>(
-                      initialValue: _startingPlayerIndex,
+                      value: _startingPlayerIndex,
                       decoration: const InputDecoration(
                         labelText: 'Starting Player',
                         border: OutlineInputBorder(),
@@ -368,7 +408,7 @@ class _GameSetupPageState extends State<GameSetupPage>
                           value: -1,
                           child: Text('Random'),
                         ),
-                        ...List.generate(4, (i) {
+                        ...List.generate(_playerCount, (i) {
                           return DropdownMenuItem(
                             value: i,
                             child: Text(_getPlayerDisplayName(i)),
@@ -405,7 +445,10 @@ class _GameSetupPageState extends State<GameSetupPage>
                   children: [
                     CircularProgressIndicator(),
                     SizedBox(height: 16),
-                    Text('Loading game data...', style: TextStyle(color: Colors.white)),
+                    Text(
+                      'Loading game data...',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ],
                 ),
               ),
