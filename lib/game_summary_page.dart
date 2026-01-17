@@ -9,6 +9,7 @@ import 'constants.dart';
 import 'game_logger.dart';
 import 'game_setup_page.dart';
 import 'game_stats_utility.dart';
+import 'post_game_review_page.dart';
 
 class GameSummaryPage extends StatefulWidget {
   final GameLogger gameLogger;
@@ -159,7 +160,7 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
             else
               _buildPlayerStatsView(context, session, _selectedPlayerIndex!),
             const SizedBox(height: 32),
-            _buildNewGameButtons(context),
+            _buildSummaryActionButtons(context),
           ],
         ),
       ),
@@ -676,13 +677,35 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
     );
   }
 
-  Widget _buildNewGameButtons(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _showNewGameDialog,
-        child: const Text('New Game'),
-      ),
+  Widget _buildSummaryActionButtons(BuildContext context) {
+    return Column(
+      children: [
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => PostGameReviewPage(
+                    gameStatsUtility: _statsUtility, // Pass _statsUtility here
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.rate_review),
+            label: const Text('Post Game Review'),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _showNewGameDialog,
+            child: const Text('New Game'),
+          ),
+        ),
+      ],
     );
   }
 

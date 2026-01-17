@@ -16,6 +16,13 @@ class GameStatsUtility {
   Map<String, Map<String, dynamic>> overallCounterStats = {};
   late List<PlayerStatsSummary> allPlayerStats;
 
+  // New fields for Post Game Review
+  bool _isDraw = false;
+  int? _winnerIndex;
+  String? _winCondition;
+  List<String> _keyCards = [];
+  List<bool> _fastManaPlayers = [];
+
   GameStatsUtility(this.gameLogger)
     : session = gameLogger.getSession(),
       turnLog = gameLogger.getTurnLog() {
@@ -53,6 +60,21 @@ class GameStatsUtility {
     });
   }
 
+  // Setter for review details
+  void setReviewDetails(
+    bool isDraw,
+    int? winnerIndex,
+    String? winCondition,
+    List<String> keyCards,
+    List<bool> fastManaPlayers,
+  ) {
+    _isDraw = isDraw;
+    _winnerIndex = winnerIndex;
+    _winCondition = winCondition;
+    _keyCards = keyCards;
+    _fastManaPlayers = fastManaPlayers;
+  }
+
   String toJsonString() {
     return jsonEncode(toJson());
   }
@@ -71,7 +93,7 @@ class GameStatsUtility {
       playerIndexToSeatNumber[i] = seatNumber;
     }
 
-    return {
+    final Map<String, dynamic> jsonOutput = {
       'game_session': {
         'session_id': 'edh-${session.startTime.millisecondsSinceEpoch}',
         'start_time': session.startTime.toIso8601String(),
@@ -87,6 +109,29 @@ class GameStatsUtility {
       },
       'player_stats': allPlayerStats.map((ps) => ps.toJson()).toList(),
     };
+
+    // Add review details if available
+    if (_isDraw ||
+        _winnerIndex != null ||
+        _winCondition != null ||
+        _keyCards.isNotEmpty ||
+        _fastManaPlayers.any((e) => e)) {
+      jsonOutput['review_details'] = {
+        'is_draw': _isDraw,
+        if (!_isDraw)
+          'winner_seat_number': playerIndexToSeatNumber[_winnerIndex!],
+        if (!_isDraw) 'win_condition': _winCondition,
+        'key_cards': _keyCards.where((card) => card.isNotEmpty).toList(),
+        'fast_mana_players': List.generate(session.playerNames.length, (index) {
+          return {
+            'player_index': index,
+            'had_fast_mana': _fastManaPlayers[index],
+          };
+        }),
+      };
+    }
+
+    return jsonOutput;
   }
 
   // ==========================================================================
