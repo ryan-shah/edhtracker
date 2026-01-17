@@ -78,7 +78,7 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
                     _buildToolSection(
                       context,
                       'Commander Damage (Cmdr Dmg)',
-                      'Track damage dealt by each opponent's commander. Tap the "Cmdr Dmg" button to open an overlay. Note: In standard EDH, 21 commander damage from a single commander causes that player to lose.',
+                      'Track damage dealt by each opponent\'s commander. Tap the "Cmdr Dmg" button to open an overlay. Note: In standard EDH, 21 commander damage from a single commander causes that player to lose.',
                       Icons.shield,
                     ),
                     _buildToolSection(
@@ -94,7 +94,7 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
                           '• Life Paid: Tracks life points paid for effects.\n'
                           '• Cards Milled: Counts the number of cards milled.\n'
                           '• Extra Turns: Tracks extra turns taken by the player.\n'
-                          '• Cards Drawn: Tracks cards drawn, automatically incrementing at the start of each player's turn.',
+                          '• Cards Drawn: Tracks cards drawn, automatically incrementing at the start of each player\'s turn.',
                       Icons.track_changes,
                     ),
                   ]),
@@ -103,11 +103,11 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
                   _buildSection(context, [
                     _buildSectionContent(
                       'Current Turn Indicator',
-                      'The active player's card has a bright border and displays the current turn number and a running timer.',
+                      'The active player\'s card has a bright border and displays the current turn number and a running timer.',
                     ),
                     _buildSectionContent(
                       'Advancing Turns',
-                      'Tap the main area of any player card to advance to the next player's turn. This logs the previous turn's data and starts the next turn.',
+                      'Tap the main area of any player card to advance to the next player\'s turn. This logs the previous turn\'s data and starts the next turn.',
                     ),
                     _buildSectionContent(
                       'Undoing Turns',
@@ -120,7 +120,7 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
                     _buildToolSection(
                       context,
                       'Help Button (Top)',
-                      'Opens this help page to guide you through the Life Tracker's features.',
+                      'Opens this help page to guide you through the Life Tracker\'s features.',
                       Icons.help_outline,
                     ),
                     _buildToolSection(
@@ -132,7 +132,7 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
                     _buildToolSection(
                       context,
                       'Timer Toggle Button (Left)',
-                      'Toggles the visibility of the turn timer on the active player's card.',
+                      'Toggles the visibility of the turn timer on the active player\'s card.',
                       Icons.timer,
                     ),
                     _buildToolSection(
