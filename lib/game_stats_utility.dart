@@ -96,6 +96,20 @@ class GameStatsUtility {
       playerIndexToSeatNumber[i] = seatNumber;
     }
 
+    // Find the user's stats, falling back to the first player's stats if not found
+    PlayerStatsSummary? userStats;
+    if (_userSeat != null) {
+      try {
+        userStats = allPlayerStats.firstWhere(
+          (ps) => ps.seatNumber == _userSeat,
+        );
+      } catch (e) {
+        userStats = allPlayerStats.isNotEmpty ? allPlayerStats.first : null;
+      }
+    } else {
+      userStats = allPlayerStats.isNotEmpty ? allPlayerStats.first : null;
+    }
+
     final Map<String, dynamic> jsonOutput = {
       'game_session': {
         'session_id': 'edh-${session.startTime.millisecondsSinceEpoch}',
@@ -110,7 +124,7 @@ class GameStatsUtility {
           };
         }),
       },
-      'player_stats': allPlayerStats.map((ps) => ps.toJson()).toList(),
+      if (userStats != null) 'player_stats': userStats.toJson(),
     };
 
     // Add review details if available

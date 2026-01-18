@@ -24,304 +24,85 @@
       }
     ]
   },
-  "player_stats": [
-    {
-      "seat_number": 1,
-      "time_stats": {
-        "total_duration": "05:00",
-        "average_duration": "01:15",
-        "longest_duration": "02:30",
-        "turn_count": 4
-      },
-      "damage_stats": {
-        "total_damage": 120,
-        "max_damage_in_turn": 40,
-        "average_damage": 30,
-        "total_commander_damage": 60,
-        "max_commander_damage_in_turn": 20,
-        "average_commander_damage": 15
-      },
-      "action_stats": {
-        "own_turn_count": 4,
-        "opponent_turn_count": 6,
-        "actions": {
-          "life_paid_during_own_turn": {
-            "total": 10,
-            "max": 5,
-            "average": 2
-          },
-          "life_paid_during_opponent_turn": {
-            "total": 8,
-            "max": 3,
-            "average": 1
-          },
-          "cards_milled_during_own_turn": {
-            "total": 5,
-            "max": 3,
-            "average": 1
-          },
-          "cards_milled_during_opponent_turn": {
-            "total": 2,
-            "max": 1,
-            "average": 0
-          },
-          "extra_turns_during_own_turn": {
-            "total": 1,
-            "max": 1,
-            "average": 0
-          },
-          "cards_drawn_during_own_turn": {
-            "total": 2,
-            "max": 1,
-            "average": 0
-          },
-          "cards_drawn_during_opponent_turn": {
-            "total": 3,
-            "max": 2,
-            "average": 0
-          }
-        }
-      },
-      "counter_stats": {
-        "own_turn_count": 4,
-        "opponent_turn_count": 6,
-        "counters": {
-          "energy_during_own_turn": {
-            "total": 100,
-            "max": 40,
-            "average": 25
-          },
-          "energy_during_opponent_turn": {
-            "total": 60,
-            "max": 20,
-            "average": 10
-          },
-          "charge_during_own_turn": {
-            "total": 50,
-            "max": 20,
-            "average": 12
-          },
-          "charge_during_opponent_turn": {
-            "total": 30,
-            "max": 10,
-            "average": 5
-          }
+  "player_stats": {
+    "seat_number": 2,
+    "time_stats": {
+      "total_duration": "04:00",
+      "average_duration": "01:00",
+      "longest_duration": "01:45",
+      "turn_count": 4
+    },
+    "damage_stats": {
+      "total_damage": 100,
+      "max_damage_in_turn": 35,
+      "average_damage": 25,
+      "total_commander_damage": 50,
+      "max_commander_damage_in_turn": 18,
+      "average_commander_damage": 12
+    },
+    "action_stats": {
+      "own_turn_count": 4,
+      "opponent_turn_count": 6,
+      "actions": {
+        "life_paid_during_own_turn": {
+          "total": 8,
+          "max": 4,
+          "average": 2
+        },
+        "life_paid_during_opponent_turn": {
+          "total": 6,
+          "max": 2,
+          "average": 1
+        },
+        "cards_milled_during_own_turn": {
+          "total": 3,
+          "max": 2,
+          "average": 0
+        },
+        "cards_milled_during_opponent_turn": {
+          "total": 1,
+          "max": 1,
+          "average": 0
+        },
+        "cards_drawn_during_own_turn": {
+          "total": 1,
+          "max": 1,
+          "average": 0
+        },
+        "cards_drawn_during_opponent_turn": {
+          "total": 2,
+          "max": 1,
+          "average": 0
         }
       }
     },
-    {
-      "seat_number": 2,
-      "time_stats": {
-        "total_duration": "04:00",
-        "average_duration": "01:00",
-        "longest_duration": "01:45",
-        "turn_count": 4
-      },
-      "damage_stats": {
-        "total_damage": 100,
-        "max_damage_in_turn": 35,
-        "average_damage": 25,
-        "total_commander_damage": 50,
-        "max_commander_damage_in_turn": 18,
-        "average_commander_damage": 12
-      },
-      "action_stats": {
-        "own_turn_count": 4,
-        "opponent_turn_count": 6,
-        "actions": {
-          "life_paid_during_own_turn": {
-            "total": 8,
-            "max": 4,
-            "average": 2
-          },
-          "life_paid_during_opponent_turn": {
-            "total": 6,
-            "max": 2,
-            "average": 1
-          },
-          "cards_milled_during_own_turn": {
-            "total": 3,
-            "max": 2,
-            "average": 0
-          },
-          "cards_milled_during_opponent_turn": {
-            "total": 1,
-            "max": 1,
-            "average": 0
-          },
-          "cards_drawn_during_own_turn": {
-            "total": 1,
-            "max": 1,
-            "average": 0
-          },
-          "cards_drawn_during_opponent_turn": {
-            "total": 2,
-            "max": 1,
-            "average": 0
-          }
-        }
-      },
-      "counter_stats": {
-        "own_turn_count": 4,
-        "opponent_turn_count": 6,
-        "counters": {
-          "energy_during_own_turn": {
-            "total": 80,
-            "max": 35,
-            "average": 20
-          },
-          "energy_during_opponent_turn": {
-            "total": 50,
-            "max": 15,
-            "average": 8
-          },
-          "charge_during_own_turn": {
-            "total": 40,
-            "max": 18,
-            "average": 10
-          },
-          "charge_during_opponent_turn": {
-            "total": 25,
-            "max": 8,
-            "average": 4
-          }
-        }
-      }
-    },
-    {
-      "seat_number": 3,
-      "time_stats": {
-        "total_duration": "03:00",
-        "average_duration": "00:45",
-        "longest_duration": "01:00",
-        "turn_count": 4
-      },
-      "damage_stats": {
-        "total_damage": 80,
-        "max_damage_in_turn": 30,
-        "average_damage": 20,
-        "total_commander_damage": 40,
-        "max_commander_damage_in_turn": 15,
-        "average_commander_damage": 10
-      },
-      "action_stats": {
-        "own_turn_count": 4,
-        "opponent_turn_count": 6,
-        "actions": {
-          "life_paid_during_own_turn": {
-            "total": 5,
-            "max": 3,
-            "average": 1
-          },
-          "life_paid_during_opponent_turn": {
-            "total": 4,
-            "max": 2,
-            "average": 0
-          },
-          "cards_milled_during_own_turn": {
-            "total": 2,
-            "max": 1,
-            "average": 0
-          },
-          "cards_milled_during_opponent_turn": {
-            "total": 1,
-            "max": 1,
-            "average": 0
-          }
-        }
-      },
-      "counter_stats": {
-        "own_turn_count": 4,
-        "opponent_turn_count": 6,
-        "counters": {
-          "energy_during_own_turn": {
-            "total": 60,
-            "max": 25,
-            "average": 15
-          },
-          "energy_during_opponent_turn": {
-            "total": 40,
-            "max": 12,
-            "average": 6
-          },
-          "charge_during_own_turn": {
-            "total": 30,
-            "max": 15,
-            "average": 7
-          },
-          "charge_during_opponent_turn": {
-            "total": 20,
-            "max": 6,
-            "average": 3
-          }
-        }
-      }
-    },
-    {
-      "seat_number": 4,
-      "time_stats": {
-        "total_duration": "02:00",
-        "average_duration": "00:30",
-        "longest_duration": "00:40",
-        "turn_count": 4
-      },
-      "damage_stats": {
-        "total_damage": 60,
-        "max_damage_in_turn": 25,
-        "average_damage": 15,
-        "total_commander_damage": 30,
-        "max_commander_damage_in_turn": 12,
-        "average_commander_damage": 7
-      },
-      "action_stats": {
-        "own_turn_count": 4,
-        "opponent_turn_count": 6,
-        "actions": {
-          "life_paid_during_own_turn": {
-            "total": 3,
-            "max": 2,
-            "average": 0
-          },
-          "life_paid_during_opponent_turn": {
-            "total": 2,
-            "max": 1,
-            "average": 0
-          },
-          "cards_milled_during_own_turn": {
-            "total": 1,
-            "max": 1,
-            "average": 0
-          }
-        }
-      },
-      "counter_stats": {
-        "own_turn_count": 4,
-        "opponent_turn_count": 6,
-        "counters": {
-          "energy_during_own_turn": {
-            "total": 40,
-            "max": 18,
-            "average": 10
-          },
-          "energy_during_opponent_turn": {
-            "total": 30,
-            "max": 10,
-            "average": 5
-          },
-          "charge_during_own_turn": {
-            "total": 20,
-            "max": 10,
-            "average": 5
-          },
-          "charge_during_opponent_turn": {
-            "total": 15,
-            "max": 5,
-            "average": 2
-          }
+    "counter_stats": {
+      "own_turn_count": 4,
+      "opponent_turn_count": 6,
+      "counters": {
+        "energy_during_own_turn": {
+          "total": 80,
+          "max": 35,
+          "average": 20
+        },
+        "energy_during_opponent_turn": {
+          "total": 50,
+          "max": 15,
+          "average": 8
+        },
+        "charge_during_own_turn": {
+          "total": 40,
+          "max": 18,
+          "average": 10
+        },
+        "charge_during_opponent_turn": {
+          "total": 25,
+          "max": 8,
+          "average": 4
         }
       }
     }
-  ],
+  },
   "review_details": {
     "is_draw": false,
     "winner_seat_number": 1,
