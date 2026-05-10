@@ -1,11 +1,9 @@
-import 'dart:convert';
-
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'constants.dart';
+import 'game_log_file_service.dart';
 import 'game_logger.dart';
 import 'game_setup_page.dart';
 import 'game_stats_utility.dart';
@@ -92,12 +90,9 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
 
       if (!mounted) return;
 
-      String? result = await FilePicker.platform.saveFile(
-        dialogTitle: 'Please select an output file:',
-        fileName: filename,
-        type: FileType.custom,
-        allowedExtensions: ['json'],
-        bytes: utf8.encode(jsonData),
+      String? result = await GameLogFileService.instance.saveJson(
+        filename: filename,
+        jsonData: jsonData,
       );
 
       if (result == null && !kIsWeb) {

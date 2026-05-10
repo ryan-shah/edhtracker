@@ -10,13 +10,11 @@ class _CacheEntry {
 
   _CacheEntry(this.value, this.expiry);
 
-  // Convert a _CacheEntry to a JSON-serializable map
   Map<String, dynamic> toJson() => {
     'value': value,
     'expiry': expiry.toIso8601String(),
   };
 
-  // Create a _CacheEntry from a JSON map
   factory _CacheEntry.fromJson(Map<String, dynamic> json) {
     return _CacheEntry(
       json['value'] as String,
@@ -27,17 +25,35 @@ class _CacheEntry {
   bool get isExpired => DateTime.now().isAfter(expiry);
 }
 
+/// Instance-based Scryfall API client. The default singleton (accessed via
+/// the static convenience methods) uses the real http.Client; tests can
+/// construct an instance with a mock client.
 class ScryfallService {
-  static DateTime? _lastRequestTime;
   static const Duration _minDelay = Duration(milliseconds: 50);
   static const Duration _retryDelay = Duration(milliseconds: 100);
   static const Duration _cacheDuration = Duration(hours: 24);
 
-  static final Map<String, _CacheEntry> _artCropCache = {};
-  static bool _cacheInitialized = false;
+  static ScryfallService _defaultInstance = ScryfallService();
 
-  // Initialize cache from SharedPreferences
-  static Future<void> _initCache() async {
+  /// Replace the default singleton (used by static wrappers). Tests call this
+  /// in setUp and restore the original in tearDown.
+  static void setDefaultInstance(ScryfallService instance) {
+    _defaultInstance = instance;
+  }
+
+  static ScryfallService resetDefaultInstance() {
+    _defaultInstance = ScryfallService();
+    return _defaultInstance;
+  }
+
+  final http.Client _client;
+  final Map<String, _CacheEntry> _artCropCache = {};
+  bool _cacheInitialized = false;
+  DateTime? _lastRequestTime;
+
+  ScryfallService({http.Client? client}) : _client = client ?? http.Client();
+
+  Future<void> _initCache() async {
     if (_cacheInitialized) return;
     final prefs = await SharedPreferences.getInstance();
     final cachedString = prefs.getString(_cacheKey);
@@ -51,20 +67,18 @@ class ScryfallService {
     _cacheInitialized = true;
   }
 
-  // Save cache to SharedPreferences
-  static Future<void> _saveCache() async {
+  Future<void> _saveCache() async {
     final prefs = await SharedPreferences.getInstance();
     final Map<String, dynamic> serializableCache = {};
     _artCropCache.forEach((key, entry) {
-      if (!entry.isExpired) { // Only save non-expired entries
+      if (!entry.isExpired) {
         serializableCache[key] = entry.toJson();
       }
     });
     await prefs.setString(_cacheKey, json.encode(serializableCache));
   }
 
-  static Future<void> _throttleRequests() async {
-    // Ensure cache is loaded before any requests that might use it
+  Future<void> _throttleRequests() async {
     await _initCache();
 
     if (_lastRequestTime != null) {
@@ -78,7 +92,12 @@ class ScryfallService {
     _lastRequestTime = DateTime.now();
   }
 
-  static Future<List<String>> searchCards(String pattern, {bool isPartner = false, int retryCount = 0, bool unconventionalCommanders = false}) async {
+  Future<List<String>> searchCardsInstance(
+    String pattern, {
+    bool isPartner = false,
+    int retryCount = 0,
+    bool unconventionalCommanders = false,
+  }) async {
     if (pattern.length < 3) {
       return Future.value([]);
     }
@@ -101,7 +120,7 @@ class ScryfallService {
       });
     }
 
-    final response = await http.get(
+    final response = await _client.get(
       uri,
       headers: {
         'User-Agent': 'EDHTracker/1.0',
@@ -113,12 +132,10 @@ class ScryfallService {
       final data = json.decode(response.body);
       if (data['data'] != null && data['data'] is List) {
         if (unconventionalCommanders) {
-          // Response from /autocomplete is a 'catalog' object with a list of strings
           if (data['object'] == 'catalog') {
             return (data['data'] as List).map((name) => name as String).toList();
           }
         } else {
-          // Response from /search is a 'list' object with a list of card objects
           if (data['object'] == 'list') {
             final cards = data['data'] as List;
             return cards.map((card) => card['name'] as String).toList();
@@ -127,12 +144,17 @@ class ScryfallService {
       }
     } else if (response.statusCode == 429 && retryCount < 1) {
       await Future.delayed(_retryDelay);
-      return searchCards(pattern, isPartner: isPartner, retryCount: retryCount + 1, unconventionalCommanders: unconventionalCommanders);
+      return searchCardsInstance(
+        pattern,
+        isPartner: isPartner,
+        retryCount: retryCount + 1,
+        unconventionalCommanders: unconventionalCommanders,
+      );
     }
     return [];
   }
 
-  static Future<String?> getCardArtUrl(String cardName, {int retryCount = 0}) async {
+  Future<String?> getCardArtUrlInstance(String cardName, {int retryCount = 0}) async {
     await _initCache();
 
     if (_artCropCache.containsKey(cardName) && !_artCropCache[cardName]!.isExpired) {
@@ -145,7 +167,7 @@ class ScryfallService {
       'exact': cardName,
     });
 
-    final response = await http.get(
+    final response = await _client.get(
       uri,
       headers: {
         'User-Agent': 'EDHTracker/1.0',
@@ -156,12 +178,9 @@ class ScryfallService {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       String? artCropUrl;
-      // Handle normal cards
       if (data['image_uris'] != null && data['image_uris']['art_crop'] != null) {
         artCropUrl = data['image_uris']['art_crop'] as String;
-      }
-      // Handle transform cards (double-faced)
-      else if (data['card_faces'] != null && data['card_faces'] is List) {
+      } else if (data['card_faces'] != null && data['card_faces'] is List) {
         final faces = data['card_faces'] as List;
         if (faces.isNotEmpty && faces[0]['image_uris'] != null) {
           artCropUrl = faces[0]['image_uris']['art_crop'] as String;
@@ -170,13 +189,33 @@ class ScryfallService {
 
       if (artCropUrl != null) {
         _artCropCache[cardName] = _CacheEntry(artCropUrl, DateTime.now().add(_cacheDuration));
-        _saveCache(); // Save cache after modification
+        _saveCache();
       }
       return artCropUrl;
     } else if (response.statusCode == 429 && retryCount < 1) {
       await Future.delayed(_retryDelay);
-      return getCardArtUrl(cardName, retryCount: retryCount + 1);
+      return getCardArtUrlInstance(cardName, retryCount: retryCount + 1);
     }
     return null;
+  }
+
+  // ---- Static convenience wrappers (delegate to the default singleton). ----
+
+  static Future<List<String>> searchCards(
+    String pattern, {
+    bool isPartner = false,
+    int retryCount = 0,
+    bool unconventionalCommanders = false,
+  }) {
+    return _defaultInstance.searchCardsInstance(
+      pattern,
+      isPartner: isPartner,
+      retryCount: retryCount,
+      unconventionalCommanders: unconventionalCommanders,
+    );
+  }
+
+  static Future<String?> getCardArtUrl(String cardName, {int retryCount = 0}) {
+    return _defaultInstance.getCardArtUrlInstance(cardName, retryCount: retryCount);
   }
 }
