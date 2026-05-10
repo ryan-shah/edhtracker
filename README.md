@@ -18,6 +18,7 @@ A simple and effective life tracker for four-player games of Magic: The Gatherin
 *   **Turn Counter:** A clear turn counter is displayed on the current player's card with turn progression controls.
 *   **Turn Timer:** Tracks the duration of the current turn, visible on the active player's card. The timer display can be toggled on or off from the central menu.
 *   **Undo Turn:** Go back to the previous turn state with a long-press on any player card. This reverts life totals, counters, and turn progression.
+*   **Player Elimination:** When a player's life hits 0 or they take 21 commander damage, an "ELIMINATED" overlay appears. Tap the overlay to dismiss it (useful for effects like Phyrexian Unlife or Platinum Angel). Long-press the life total to manually mark a player as eliminated with a confirmation dialog. Eliminated players are automatically skipped during turn advancement, and the skip is recorded in the game log.
 *   **Game Logging:** Automatically records game state at the end of each turn, enabling the undo functionality and game summary generation.
 *   **High-Contrast UI:** Important elements like turn indicators and action buttons use a high-contrast white and deep purple theme for excellent visibility.
 *   **Simple Interface:** A clean and intuitive interface, locked in landscape mode for easy viewing on a table.

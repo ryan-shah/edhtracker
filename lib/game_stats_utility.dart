@@ -26,7 +26,13 @@ class GameStatsUtility {
 
   GameStatsUtility(this.gameLogger)
     : session = gameLogger.getSession(),
-      turnLog = gameLogger.getTurnLog() {
+      // Skipped entries (eliminated players whose turn was passed over) carry
+      // zero duration and no actions; including them would inflate turn counts
+      // and dilute per-player averages.
+      turnLog = gameLogger
+          .getTurnLog()
+          .where((t) => !t.skipped)
+          .toList() {
     _calculateAll();
   }
 
