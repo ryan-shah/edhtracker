@@ -1,12 +1,10 @@
-import 'dart:convert';
-import 'dart:io';
 import 'dart:math';
 
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'commander_autocomplete.dart';
+import 'game_log_file_service.dart';
 import 'game_logger.dart';
 import 'game_summary_page.dart';
 import 'help_game_setup.dart';
@@ -154,35 +152,15 @@ class _GameSetupPageState extends State<GameSetupPage>
   }
 
   Future<void> _loadGameFromJson() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['json'],
-    );
+    final loaded = await GameLogFileService.instance.pickAndReadJson();
 
-    if (result != null && result.files.isNotEmpty) {
+    if (loaded != null) {
       setState(() {
         _isLoading = true;
       });
 
       try {
-        final PlatformFile file = result.files.single;
-
-        // Read file content - handle both bytes and path
-        String jsonString;
-        if (file.bytes != null) {
-          // If bytes are available (usually on web/some mobile), use them
-          jsonString = utf8.decode(file.bytes!);
-        } else if (file.path != null) {
-          // If path is available (usually on Android/iOS), read from file system
-          final fileContent = await File(file.path!).readAsString();
-          jsonString = fileContent;
-        } else {
-          throw Exception(
-            'Unable to read file: neither bytes nor path available',
-          );
-        }
-
-        final gameLogger = GameLogger.fromJson(jsonString);
+        final gameLogger = GameLogger.fromJson(loaded.jsonString);
 
         // Fetch card art URLs for all commanders
         final session = gameLogger.getSession();
