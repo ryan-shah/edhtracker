@@ -39,8 +39,8 @@ class LifeTrackerPage extends StatefulWidget {
 }
 
 class _LifeTrackerPageState extends State<LifeTrackerPage> {
-  final List<GlobalKey<PlayerCardState>> _playerCardKeys = List.generate(
-    4,
+  late final List<GlobalKey<PlayerCardState>> _playerCardKeys = List.generate(
+    widget.playerCount,
     (_) => GlobalKey<PlayerCardState>(),
   );
   late int _currentPlayerIndex;
@@ -64,10 +64,17 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
   @override
   void initState() {
     super.initState();
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    SystemChrome.setPreferredOrientations(
+      widget.playerCount == 2
+          ? const [
+              DeviceOrientation.portraitUp,
+              DeviceOrientation.portraitDown,
+            ]
+          : const [
+              DeviceOrientation.landscapeLeft,
+              DeviceOrientation.landscapeRight,
+            ],
+    );
     _currentPlayerIndex = widget.startingPlayerIndex;
     _currentTurnStartTime = DateTime.now(); // Initialize turn start time
     _isTimerEnabled = false; // Timer is disabled by default; toggle via menu
@@ -273,6 +280,12 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
     });
   }
 
+  // 2-player: only top card (index 1) is upside-down. 3/4-player: whole top row.
+  int _overlayQuarterTurns(int p) {
+    if (widget.playerCount == 2) return p == 1 ? 2 : 0;
+    return (p == 0 || p == 1) ? 2 : 0;
+  }
+
   Widget _buildActiveOverlay() {
     final p = _activeOverlayPlayerIndex!;
     final cardState = _playerCardKeys[p].currentState;
@@ -349,7 +362,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
           ),
         ];
         return RotatedBox(
-          quarterTurns: (p == 0 || p == 1) ? 2 : 0,
+          quarterTurns: _overlayQuarterTurns(p),
           child: CounterOverlay(
             items: items,
             onClose: _closeOverlay,
@@ -375,7 +388,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
             )
             .toList();
         return RotatedBox(
-          quarterTurns: (p == 0 || p == 1) ? 2 : 0,
+          quarterTurns: _overlayQuarterTurns(p),
           child: CounterOverlay(
             items: items,
             onClose: _closeOverlay,
@@ -394,10 +407,8 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
       // all-eliminated table can't infinite-loop.
       var safety = 0;
       while (safety < widget.playerCount) {
-        // Advance one seat, re-skipping inactive seats in 3-player games.
-        do {
-          _currentPlayerIndex = (_currentPlayerIndex + 1) % 4;
-        } while (_currentPlayerIndex >= widget.playerCount);
+        _currentPlayerIndex =
+            (_currentPlayerIndex + 1) % widget.playerCount;
 
         // Increment turn count whenever the cursor passes the starter,
         // even when that starter is eliminated and being skipped.
@@ -478,11 +489,13 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
         builder: (context, constraints) {
           final isPortrait = constraints.maxHeight > constraints.maxWidth;
 
-          final playerCardsWidget = widget.playerCount == 3
-              ? _buildThreePlayerLayout()
-              : _buildFourPlayerLayout();
+          final playerCardsWidget = switch (widget.playerCount) {
+            2 => _buildTwoPlayerLayout(),
+            3 => _buildThreePlayerLayout(),
+            _ => _buildFourPlayerLayout(),
+          };
 
-          final lifeTrackerWidget = isPortrait
+          final lifeTrackerWidget = (isPortrait && widget.playerCount != 2)
               ? RotatedBox(quarterTurns: 1, child: playerCardsWidget)
               : playerCardsWidget;
 
@@ -510,7 +523,9 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => const HelpLifeTracker(),
+                                  builder: (context) => HelpLifeTracker(
+                                    playerCount: widget.playerCount,
+                                  ),
                                 ),
                               );
                             },
@@ -592,7 +607,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
               if (_activeOverlayPlayerIndex != null &&
                   _activeOverlayKind != null)
                 Positioned.fill(
-                  child: isPortrait
+                  child: (isPortrait && widget.playerCount != 2)
                       ? RotatedBox(
                           quarterTurns: 1,
                           child: _buildActiveOverlay(),
@@ -603,6 +618,58 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
           );
         },
       ),
+    );
+  }
+
+  Widget _buildTwoPlayerLayout() {
+    return Column(
+      children: [
+        Expanded(
+          child: RotatedBox(
+            quarterTurns: 2,
+            child: PlayerCard(
+              key: _playerCardKeys[1],
+              playerIndex: 1,
+              playerName: widget.playerNames[1],
+              allCommanderNames: widget.playerCommanderNames,
+              backgroundUrls: widget.playerArtUrls[1],
+              startingLife: widget.startingLife,
+              isCurrentTurn: _currentPlayerIndex == 1,
+              onTurnEnd: _nextTurn,
+              onTurnBack: _previousTurn,
+              turnCount: _turnCount,
+              currentTurnDuration: _currentPlayerIndex == 1
+                  ? _currentTurnDuration
+                  : Duration.zero,
+              showTimerDisplay: _isTimerEnabled,
+              onOpenCommanderDamage: _openCommanderDamage,
+              onOpenActions: _openActions,
+              onOpenCounters: _openCounters,
+            ),
+          ),
+        ),
+        Expanded(
+          child: PlayerCard(
+            key: _playerCardKeys[0],
+            playerIndex: 0,
+            playerName: widget.playerNames[0],
+            allCommanderNames: widget.playerCommanderNames,
+            backgroundUrls: widget.playerArtUrls[0],
+            startingLife: widget.startingLife,
+            isCurrentTurn: _currentPlayerIndex == 0,
+            onTurnEnd: _nextTurn,
+            onTurnBack: _previousTurn,
+            turnCount: _turnCount,
+            currentTurnDuration: _currentPlayerIndex == 0
+                ? _currentTurnDuration
+                : Duration.zero,
+            showTimerDisplay: _isTimerEnabled,
+            onOpenCommanderDamage: _openCommanderDamage,
+            onOpenActions: _openActions,
+            onOpenCounters: _openCounters,
+          ),
+        ),
+      ],
     );
   }
 

@@ -1,6 +1,6 @@
 # EDH Tracker
 
-A simple and effective life tracker for four-player games of Magic: The Gathering's Commander (EDH) format.
+A simple and effective life tracker for two-, three-, and four-player games of Magic: The Gathering's Commander (EDH) format.
 
 ## Features
 
@@ -11,7 +11,8 @@ A simple and effective life tracker for four-player games of Magic: The Gatherin
 *   **Partner Commanders:** Support for partner commanders - select up to two commanders per player.
 *   **Unconventional Commanders:** Optional toggle to remove "is:commander" and "is:partner" filters for searching non-traditional commanders.
 *   **Commander Art Display:** Each player's commander art is automatically fetched from Scryfall and displayed on their card with caching for offline access.
-*   **Life Tracking:** Tracks life totals for four players with easy increment/decrement controls.
+*   **Flexible Player Count:** Supports 2-, 3-, or 4-player games. Two-player mode uses a stacked portrait layout with the top card rotated 180° so opposing players can each read their own.
+*   **Life Tracking:** Tracks life totals for every player with easy increment/decrement controls.
 *   **Commander Damage:** Tracks commander damage from each player with an interactive overlay.
 *   **Player Counters:** Tracks common player counters like Energy, Experience, Poison, and Rad via an overlay interface.
 *   **Action Tracking:** Tracks actions such as life paid, cards milled, and extra turns taken. The "Cards Drawn" counter automatically increments at the start of each player's turn.
@@ -21,7 +22,7 @@ A simple and effective life tracker for four-player games of Magic: The Gatherin
 *   **Player Elimination:** When a player's life hits 0 or they take 21 commander damage, an "ELIMINATED" overlay appears. Tap the overlay to dismiss it (useful for effects like Phyrexian Unlife or Platinum Angel). Long-press the life total to manually mark a player as eliminated with a confirmation dialog. Eliminated players are automatically skipped during turn advancement, and the skip is recorded in the game log.
 *   **Game Logging:** Automatically records game state at the end of each turn, enabling the undo functionality and game summary generation.
 *   **High-Contrast UI:** Important elements like turn indicators and action buttons use a high-contrast white and deep purple theme for excellent visibility.
-*   **Simple Interface:** A clean and intuitive interface, locked in landscape mode for easy viewing on a table.
+*   **Simple Interface:** A clean and intuitive interface. 3- and 4-player games are locked to landscape for easy table viewing; 2-player games are locked to portrait.
 *   **Easy Reset:** A central reset button takes you back to the setup screen for a new game, with a confirmation dialog.
 *   **Customizable UI:** All colors, spacing, and dimensions are easily customizable through the centralized constants file.
 *   **Improved UX:** Overlays for commander damage, player counters, and actions have clear close buttons and support scrolling for many items.

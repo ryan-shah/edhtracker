@@ -14,7 +14,11 @@ import 'constants.dart';
 /// - Game Summary and logging
 /// - Tips and best practices
 class HelpLifeTracker extends StatefulWidget {
-  const HelpLifeTracker({super.key});
+  /// Player count of the game we came from, used to restore the correct
+  /// orientation lock on dispose (2-player → portrait, otherwise landscape).
+  final int playerCount;
+
+  const HelpLifeTracker({super.key, this.playerCount = 4});
 
   @override
   State<HelpLifeTracker> createState() => _HelpLifeTrackerState();
@@ -32,11 +36,17 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
 
   @override
   void dispose() {
-    // Reset orientation preferences when leaving the page
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    SystemChrome.setPreferredOrientations(
+      widget.playerCount == 2
+          ? const [
+              DeviceOrientation.portraitUp,
+              DeviceOrientation.portraitDown,
+            ]
+          : const [
+              DeviceOrientation.landscapeLeft,
+              DeviceOrientation.landscapeRight,
+            ],
+    );
     super.dispose();
   }
 

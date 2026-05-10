@@ -294,7 +294,7 @@ class _GameSetupPageState extends State<GameSetupPage>
                         labelText: 'Number of Players',
                         border: OutlineInputBorder(),
                       ),
-                      items: [3, 4].map((count) {
+                      items: [2, 3, 4].map((count) {
                         return DropdownMenuItem(
                           value: count,
                           child: Text('$count Players'),

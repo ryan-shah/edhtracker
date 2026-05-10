@@ -13,7 +13,7 @@ class CommanderDamageOverlay extends StatelessWidget {
   /// Index of the player who opened the overlay (the damage receiver).
   final int receiverIndex;
 
-  /// Number of active players (3 or 4).
+  /// Number of active players (2, 3, or 4).
   final int playerCount;
 
   /// 2D list of commander names: [playerIndex][commanderIndex].
@@ -54,7 +54,11 @@ class CommanderDamageOverlay extends StatelessWidget {
       ).cardColor.withValues(alpha: UIConstants.overlayContainerOpacity),
       child: Stack(
         children: [
-          playerCount == 3 ? _buildThreeSlotGrid() : _buildFourSlotGrid(),
+          switch (playerCount) {
+            2 => _buildTwoSlotGrid(),
+            3 => _buildThreeSlotGrid(),
+            _ => _buildFourSlotGrid(),
+          },
           Positioned(
             bottom: UIConstants.fullScreenOverlayCloseButtonBottom,
             left: 0,
@@ -69,6 +73,17 @@ class CommanderDamageOverlay extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildTwoSlotGrid() {
+    return Column(
+      children: [
+        Expanded(
+          child: RotatedBox(quarterTurns: 2, child: _buildSlot(1)),
+        ),
+        Expanded(child: _buildSlot(0)),
+      ],
     );
   }
 
