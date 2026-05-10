@@ -1,30 +1,36 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:edhtracker/main.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
+  testWidgets('GameSetupPage shows player-count dropdown with 2/3/4 options',
+      (WidgetTester tester) async {
     await tester.pumpWidget(const MyApp());
-
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
     await tester.pump();
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Number of Players'), findsOneWidget);
+    expect(find.text('4 Players'), findsOneWidget);
+
+    final playerCountDropdown = find.ancestor(
+      of: find.text('Number of Players'),
+      matching: find.byType(DropdownButtonFormField<int>),
+    );
+    expect(playerCountDropdown, findsOneWidget);
+
+    await tester.tap(playerCountDropdown);
+    await tester.pumpAndSettle();
+
+    // Open menu shows all three options. The currently-selected "4 Players"
+    // also still renders in the field, so it appears twice.
+    expect(find.text('2 Players'), findsOneWidget);
+    expect(find.text('3 Players'), findsOneWidget);
+    expect(find.text('4 Players'), findsNWidgets(2));
+
+    await tester.tap(find.text('2 Players').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('2 Players'), findsOneWidget);
+    expect(find.text('4 Players'), findsNothing);
   });
 }
