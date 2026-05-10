@@ -3,11 +3,16 @@ import 'dart:async'; // Import for Timer
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'commander_damage_overlay.dart';
+import 'constants.dart';
+import 'counter_overlay.dart';
 import 'game_logger.dart'; // Import the new game logger
 import 'game_setup_page.dart';
 import 'game_summary_page.dart'; // Import the game summary page
 import 'help_life_tracker.dart';
 import 'player_card.dart';
+
+enum _OverlayKind { commanderDamage, actions, counters }
 
 class LifeTrackerPage extends StatefulWidget {
   final List<String> playerNames;
@@ -49,6 +54,10 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
   late DateTime _currentTurnStartTime;
   Duration _currentTurnDuration = Duration.zero;
   Timer? _turnTimer;
+
+  // Active full-screen overlay (null = no overlay shown)
+  int? _activeOverlayPlayerIndex;
+  _OverlayKind? _activeOverlayKind;
 
   static const double _menuOffset = 100.0; // Fixed offset from center
 
@@ -232,6 +241,150 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
     });
   }
 
+  // ============================================================================
+  // Full-screen overlay management
+  // ============================================================================
+
+  void _openCommanderDamage(int p) {
+    setState(() {
+      _activeOverlayPlayerIndex = p;
+      _activeOverlayKind = _OverlayKind.commanderDamage;
+    });
+  }
+
+  void _openActions(int p) {
+    setState(() {
+      _activeOverlayPlayerIndex = p;
+      _activeOverlayKind = _OverlayKind.actions;
+    });
+  }
+
+  void _openCounters(int p) {
+    setState(() {
+      _activeOverlayPlayerIndex = p;
+      _activeOverlayKind = _OverlayKind.counters;
+    });
+  }
+
+  void _closeOverlay() {
+    setState(() {
+      _activeOverlayPlayerIndex = null;
+      _activeOverlayKind = null;
+    });
+  }
+
+  Widget _buildActiveOverlay() {
+    final p = _activeOverlayPlayerIndex!;
+    final cardState = _playerCardKeys[p].currentState;
+    if (cardState == null) return const SizedBox.shrink();
+
+    switch (_activeOverlayKind!) {
+      case _OverlayKind.commanderDamage:
+        return CommanderDamageOverlay(
+          receiverIndex: p,
+          playerCount: widget.playerCount,
+          allCommanderNames: widget.playerCommanderNames,
+          allArtUrls: widget.playerArtUrls,
+          currentDamage: cardState.commanderDamage,
+          onIncrement: (from, c) {
+            cardState.incrementCommanderDamage(from, c);
+            setState(() {});
+          },
+          onDecrement: (from, c) {
+            cardState.decrementCommanderDamage(from, c);
+            setState(() {});
+          },
+          onClose: _closeOverlay,
+        );
+
+      case _OverlayKind.actions:
+        final items = [
+          OverlayItem(
+            label: 'Life Paid',
+            value: cardState.lifePaid,
+            onIncrement: () {
+              cardState.incrementLifePaid();
+              setState(() {});
+            },
+            onDecrement: () {
+              cardState.decrementLifePaid();
+              setState(() {});
+            },
+          ),
+          OverlayItem(
+            label: 'Cards Milled',
+            value: cardState.cardsMilled,
+            onIncrement: () {
+              cardState.incrementCardsMilled();
+              setState(() {});
+            },
+            onDecrement: () {
+              cardState.decrementCardsMilled();
+              setState(() {});
+            },
+          ),
+          OverlayItem(
+            label: 'Extra Turns',
+            value: cardState.extraTurns,
+            onIncrement: () {
+              cardState.incrementExtraTurns();
+              setState(() {});
+            },
+            onDecrement: () {
+              cardState.decrementExtraTurns();
+              setState(() {});
+            },
+          ),
+          OverlayItem(
+            label: 'Cards Drawn',
+            value: cardState.cardsDrawn,
+            onIncrement: () {
+              cardState.incrementCardsDrawn();
+              setState(() {});
+            },
+            onDecrement: () {
+              cardState.decrementCardsDrawn();
+              setState(() {});
+            },
+          ),
+        ];
+        return RotatedBox(
+          quarterTurns: (p == 0 || p == 1) ? 2 : 0,
+          child: CounterOverlay(
+            items: items,
+            onClose: _closeOverlay,
+            isScrollable: true,
+          ),
+        );
+
+      case _OverlayKind.counters:
+        final items = UIConstants.playerCounterTypes
+            .map(
+              (name) => OverlayItem(
+                label: name,
+                value: cardState.playerCounters[name] ?? 0,
+                onIncrement: () {
+                  cardState.incrementPlayerCounter(name);
+                  setState(() {});
+                },
+                onDecrement: () {
+                  cardState.decrementPlayerCounter(name);
+                  setState(() {});
+                },
+              ),
+            )
+            .toList();
+        return RotatedBox(
+          quarterTurns: (p == 0 || p == 1) ? 2 : 0,
+          child: CounterOverlay(
+            items: items,
+            onClose: _closeOverlay,
+            isScrollable: false,
+          ),
+        );
+    }
+  }
+
   void _nextTurn() {
     setState(() {
       // Record the state *before* advancing the turn
@@ -405,6 +558,10 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                   ],
                 ),
               ),
+              // Full-screen overlay (commander damage / actions / counters)
+              if (_activeOverlayPlayerIndex != null &&
+                  _activeOverlayKind != null)
+                Positioned.fill(child: _buildActiveOverlay()),
             ],
           );
         },
@@ -437,6 +594,9 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                         : Duration.zero,
                     showTimerDisplay:
                         _isTimerEnabled, // Pass timer enabled state
+                    onOpenCommanderDamage: _openCommanderDamage,
+                    onOpenActions: _openActions,
+                    onOpenCounters: _openCounters,
                   ),
                 ),
               ),
@@ -459,6 +619,9 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                         : Duration.zero,
                     showTimerDisplay:
                         _isTimerEnabled, // Pass timer enabled state
+                    onOpenCommanderDamage: _openCommanderDamage,
+                    onOpenActions: _openActions,
+                    onOpenCounters: _openCounters,
                   ),
                 ),
               ),
@@ -484,6 +647,9 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                       ? _currentTurnDuration
                       : Duration.zero,
                   showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
+                  onOpenCommanderDamage: _openCommanderDamage,
+                  onOpenActions: _openActions,
+                  onOpenCounters: _openCounters,
                 ),
               ),
               Expanded(
@@ -502,6 +668,9 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                       ? _currentTurnDuration
                       : Duration.zero,
                   showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
+                  onOpenCommanderDamage: _openCommanderDamage,
+                  onOpenActions: _openActions,
+                  onOpenCounters: _openCounters,
                 ),
               ),
             ],
@@ -536,6 +705,9 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                         : Duration.zero,
                     showTimerDisplay:
                         _isTimerEnabled, // Pass timer enabled state
+                    onOpenCommanderDamage: _openCommanderDamage,
+                    onOpenActions: _openActions,
+                    onOpenCounters: _openCounters,
                   ),
                 ),
               ),
@@ -558,6 +730,9 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                         : Duration.zero,
                     showTimerDisplay:
                         _isTimerEnabled, // Pass timer enabled state
+                    onOpenCommanderDamage: _openCommanderDamage,
+                    onOpenActions: _openActions,
+                    onOpenCounters: _openCounters,
                   ),
                 ),
               ),
@@ -583,6 +758,9 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                       ? _currentTurnDuration
                       : Duration.zero,
                   showTimerDisplay: _isTimerEnabled, // Pass timer enabled state
+                  onOpenCommanderDamage: _openCommanderDamage,
+                  onOpenActions: _openActions,
+                  onOpenCounters: _openCounters,
                 ),
               ),
               // Empty container with dark overlay for player 4 slot in 3-player game

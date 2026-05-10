@@ -52,6 +52,21 @@ class UIConstants {
   /// Minimum width threshold for using large icons
   static const double largeIconSizeThreshold = 300;
 
+  /// Bottom margin for the close button on full-screen overlays
+  static const double fullScreenOverlayCloseButtonBottom = 16.0;
+
+  /// Padding around commander damage slot content
+  static const double commanderDamageSlotPadding = 8.0;
+
+  /// Font size for the large commander damage number
+  static const double commanderDamageNumberFontSize = 56.0;
+
+  /// Icon size for +/- buttons in full-screen counter/action overlay cells
+  static const double overlayCellIconSize = 36.0;
+
+  /// Padding around each cell in the 2x2 counter/action overlay layout
+  static const double overlayCellPadding = 12.0;
+
   // ============================================================================
   // Player Card Constants
   // ============================================================================

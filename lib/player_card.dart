@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'constants.dart';
-import 'counter_overlay.dart';
 import 'game_logger.dart'; // Import the new game logger
 import 'utils.dart';
 
@@ -45,6 +44,16 @@ class PlayerCard extends StatefulWidget {
   /// Whether to show the turn timer display
   final bool showTimerDisplay;
 
+  /// Called when the player taps the "Cmdr Dmg" button.
+  /// The page hosts a full-screen overlay for the receiver player.
+  final ValueChanged<int> onOpenCommanderDamage;
+
+  /// Called when the player taps the "Actions" button.
+  final ValueChanged<int> onOpenActions;
+
+  /// Called when the player taps the "Counters" button.
+  final ValueChanged<int> onOpenCounters;
+
   const PlayerCard({
     super.key,
     required this.playerIndex,
@@ -57,6 +66,9 @@ class PlayerCard extends StatefulWidget {
     required this.onTurnBack,
     required this.turnCount,
     required this.currentTurnDuration,
+    required this.onOpenCommanderDamage,
+    required this.onOpenActions,
+    required this.onOpenCounters,
     this.showTimerDisplay = true, // Default to true
   });
 
@@ -81,15 +93,6 @@ class PlayerCardState extends State<PlayerCard> {
 
   /// Player counter tracking: key = counter name, value = counter amount
   final Map<String, int> _playerCounters = {};
-
-  /// Whether the commander damage overlay is currently visible
-  bool _showCommanderDamage = false;
-
-  /// Whether the player counters overlay is currently visible
-  bool _showPlayerCounters = false;
-
-  /// Whether the actions overlay is currently visible
-  bool _showActions = false;
 
   /// Whether the player is currently shown as eliminated
   bool _isEliminated = false;
@@ -128,9 +131,6 @@ class PlayerCardState extends State<PlayerCard> {
       _life = widget.startingLife;
       _commanderDamage.clear();
       _playerCounters.clear();
-      _showCommanderDamage = false;
-      _showPlayerCounters = false;
-      _showActions = false;
       _isEliminated = false;
       _hasDismissedElimination = false;
       _lifePaid = 0;
@@ -141,18 +141,31 @@ class PlayerCardState extends State<PlayerCard> {
   }
 
   // ============================================================================
+  // Public read-only getters (used by page-level full-screen overlays)
+  // ============================================================================
+
+  int get life => _life;
+  int get lifePaid => _lifePaid;
+  int get cardsMilled => _cardsMilled;
+  int get extraTurns => _extraTurns;
+  int get cardsDrawn => _cardsDrawn;
+  bool get isEliminated => _isEliminated;
+  Map<String, int> get playerCounters => Map.unmodifiable(_playerCounters);
+  Map<String, int> get commanderDamage => Map.unmodifiable(_commanderDamage);
+
+  // ============================================================================
   // Life Total Management
   // ============================================================================
 
   /// Increments life total by 1
-  void _incrementLife() {
+  void incrementLife() {
     setState(() {
       _life++;
     });
   }
 
   /// Decrements life total by 1
-  void _decrementLife() {
+  void decrementLife() {
     setState(() {
       _life--;
       if (_life == 0) {
@@ -166,7 +179,7 @@ class PlayerCardState extends State<PlayerCard> {
   // ============================================================================
 
   /// Increments life paid and decrements life total
-  void _incrementLifePaid() {
+  void incrementLifePaid() {
     setState(() {
       _lifePaid++;
       _life--;
@@ -177,7 +190,7 @@ class PlayerCardState extends State<PlayerCard> {
   }
 
   /// Decrements life paid and increments life total (if life paid > 0)
-  void _decrementLifePaid() {
+  void decrementLifePaid() {
     setState(() {
       if (_lifePaid > 0) {
         _lifePaid--;
@@ -191,14 +204,14 @@ class PlayerCardState extends State<PlayerCard> {
   // ============================================================================
 
   /// Increments cards milled counter
-  void _incrementCardsMilled() {
+  void incrementCardsMilled() {
     setState(() {
       _cardsMilled++;
     });
   }
 
   /// Decrements cards milled counter (if > 0)
-  void _decrementCardsMilled() {
+  void decrementCardsMilled() {
     setState(() {
       if (_cardsMilled > 0) {
         _cardsMilled--;
@@ -211,14 +224,14 @@ class PlayerCardState extends State<PlayerCard> {
   // ============================================================================
 
   /// Increments extra turns counter
-  void _incrementExtraTurns() {
+  void incrementExtraTurns() {
     setState(() {
       _extraTurns++;
     });
   }
 
   /// Decrements extra turns counter (if > 0)
-  void _decrementExtraTurns() {
+  void decrementExtraTurns() {
     setState(() {
       if (_extraTurns > 0) {
         _extraTurns--;
@@ -255,7 +268,7 @@ class PlayerCardState extends State<PlayerCard> {
   ///
   /// [fromPlayerIndex] - Index of the player dealing damage
   /// [commanderIndex] - Index of the commander dealing damage
-  void _incrementCommanderDamage(int fromPlayerIndex, int commanderIndex) {
+  void incrementCommanderDamage(int fromPlayerIndex, int commanderIndex) {
     final key = '${fromPlayerIndex}_$commanderIndex';
     setState(() {
       _commanderDamage.update(key, (value) => value + 1, ifAbsent: () => 1);
@@ -271,7 +284,7 @@ class PlayerCardState extends State<PlayerCard> {
   ///
   /// [fromPlayerIndex] - Index of the player dealing damage
   /// [commanderIndex] - Index of the commander dealing damage
-  void _decrementCommanderDamage(int fromPlayerIndex, int commanderIndex) {
+  void decrementCommanderDamage(int fromPlayerIndex, int commanderIndex) {
     final key = '${fromPlayerIndex}_$commanderIndex';
     setState(() {
       if (_commanderDamage.containsKey(key) && _commanderDamage[key]! > 0) {
@@ -282,54 +295,18 @@ class PlayerCardState extends State<PlayerCard> {
   }
 
   // ============================================================================
-  // Overlay Visibility Management
-  // ============================================================================
-
-  /// Toggles the visibility of the commander damage overlay.
-  /// Hides other overlays when this one is shown.
-  void _toggleCommanderDamage() {
-    setState(() {
-      _showCommanderDamage = !_showCommanderDamage;
-      _showPlayerCounters = false;
-      _showActions = false;
-    });
-  }
-
-  /// Toggles the visibility of the player counters overlay.
-  /// Hides other overlays when this one is shown.
-  void _togglePlayerCounters() {
-    setState(() {
-      _showPlayerCounters = !_showPlayerCounters;
-      _showCommanderDamage = false;
-      _showActions = false;
-    });
-  }
-
-  /// Toggles the visibility of the actions overlay.
-  /// Hides other overlays when this one is shown.
-  void _toggleActions() {
-    setState(() {
-      _showActions = !_showActions;
-      _showCommanderDamage = false;
-      _showPlayerCounters = false;
-    });
-  }
-
-  // Removed: void toggleTurnTimer() { ... }
-
-  // ============================================================================
   // Player Counter Management
   // ============================================================================
 
   /// Increments a player counter (Energy, Experience, Poison, or Rad)
-  void _incrementPlayerCounter(String counter) {
+  void incrementPlayerCounter(String counter) {
     setState(() {
       _playerCounters.update(counter, (value) => value + 1, ifAbsent: () => 1);
     });
   }
 
   /// Decrements a player counter (if > 0)
-  void _decrementPlayerCounter(String counter) {
+  void decrementPlayerCounter(String counter) {
     setState(() {
       if (_playerCounters.containsKey(counter) &&
           _playerCounters[counter]! > 0) {
@@ -470,7 +447,7 @@ class PlayerCardState extends State<PlayerCard> {
                         children: [
                           IconButton(
                             icon: const Icon(Icons.remove),
-                            onPressed: _decrementLife,
+                            onPressed: decrementLife,
                             iconSize: UIConstants.lifeCounterIconSize,
                             color: UIConstants.lifeCounterTextColor,
                             style: IconButton.styleFrom(
@@ -510,7 +487,7 @@ class PlayerCardState extends State<PlayerCard> {
                             children: [
                               IconButton(
                                 icon: const Icon(Icons.add),
-                                onPressed: _incrementLife,
+                                onPressed: incrementLife,
                                 iconSize: UIConstants.lifeCounterIconSize,
                                 color: UIConstants.lifeCounterTextColor,
                                 style: IconButton.styleFrom(
@@ -553,7 +530,9 @@ class PlayerCardState extends State<PlayerCard> {
                       children: [
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: _toggleCommanderDamage,
+                            onPressed: () => widget.onOpenCommanderDamage(
+                              widget.playerIndex,
+                            ),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: UIConstants.buttonBackgroundColor
                                   .withValues(alpha: UIConstants.buttonOpacity),
@@ -573,7 +552,8 @@ class PlayerCardState extends State<PlayerCard> {
                         const SizedBox(width: UIConstants.wrapSpacing),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: _toggleActions,
+                            onPressed: () =>
+                                widget.onOpenActions(widget.playerIndex),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: UIConstants.buttonBackgroundColor
                                   .withValues(alpha: UIConstants.buttonOpacity),
@@ -593,7 +573,8 @@ class PlayerCardState extends State<PlayerCard> {
                         const SizedBox(width: UIConstants.wrapSpacing),
                         Expanded(
                           child: ElevatedButton(
-                            onPressed: _togglePlayerCounters,
+                            onPressed: () =>
+                                widget.onOpenCounters(widget.playerIndex),
                             style: ElevatedButton.styleFrom(
                               backgroundColor: UIConstants.buttonBackgroundColor
                                   .withValues(alpha: UIConstants.buttonOpacity),
@@ -616,80 +597,6 @@ class PlayerCardState extends State<PlayerCard> {
                 ),
               ],
             ),
-            // Overlay: Commander Damage
-            if (_showCommanderDamage)
-              Positioned.fill(
-                child: CounterOverlay(
-                  items: [
-                    // Generate items for commander damage from each player
-                    for (int p = 0; p < widget.allCommanderNames.length; p++)
-                      ...List.generate(widget.allCommanderNames[p].length, (c) {
-                        final commanderName = widget.allCommanderNames[p][c];
-                        final key = '${p}_$c';
-                        return OverlayItem(
-                          label: p == widget.playerIndex
-                              ? '(you) $commanderName'
-                              : commanderName,
-                          value: _commanderDamage[key] ?? 0,
-                          onIncrement: () => _incrementCommanderDamage(p, c),
-                          onDecrement: () => _decrementCommanderDamage(p, c),
-                        );
-                      }),
-                  ],
-                  onClose: _toggleCommanderDamage,
-                  isScrollable: true,
-                ),
-              ),
-            // Overlay: Player Counters
-            if (_showPlayerCounters)
-              Positioned.fill(
-                child: CounterOverlay(
-                  items: UIConstants.playerCounterTypes
-                      .map(
-                        (name) => OverlayItem(
-                          label: name,
-                          value: _playerCounters[name] ?? 0,
-                          onIncrement: () => _incrementPlayerCounter(name),
-                          onDecrement: () => _decrementPlayerCounter(name),
-                        ),
-                      )
-                      .toList(),
-                  onClose: _togglePlayerCounters,
-                ),
-              ),
-            // Overlay: Actions (Life Paid, Cards Milled, Extra Turns)
-            if (_showActions)
-              Positioned.fill(
-                child: CounterOverlay(
-                  items: [
-                    OverlayItem(
-                      label: 'Life Paid',
-                      value: _lifePaid,
-                      onIncrement: _incrementLifePaid,
-                      onDecrement: _decrementLifePaid,
-                    ),
-                    OverlayItem(
-                      label: 'Cards Milled',
-                      value: _cardsMilled,
-                      onIncrement: _incrementCardsMilled,
-                      onDecrement: _decrementCardsMilled,
-                    ),
-                    OverlayItem(
-                      label: 'Extra Turns',
-                      value: _extraTurns,
-                      onIncrement: _incrementExtraTurns,
-                      onDecrement: _decrementExtraTurns,
-                    ),
-                    OverlayItem(
-                      label: 'Cards Drawn',
-                      value: _cardsDrawn,
-                      onIncrement: incrementCardsDrawn,
-                      onDecrement: decrementCardsDrawn,
-                    ),
-                  ],
-                  onClose: _toggleActions,
-                ),
-              ),
             // Elimination Overlay
             if (_isEliminated)
               Positioned.fill(
