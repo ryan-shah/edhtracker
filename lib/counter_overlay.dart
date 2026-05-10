@@ -188,7 +188,7 @@ class _OverlayCell extends StatelessWidget {
                   iconSize: UIConstants.overlayCellIconSize,
                   color: UIConstants.lifeCounterTextColor,
                   style: IconButton.styleFrom(
-                    backgroundColor: UIConstants.buttonBackgroundDarkColor,
+                    backgroundColor: Colors.black54,
                   ),
                 ),
                 Padding(
@@ -223,7 +223,7 @@ class _OverlayCell extends StatelessWidget {
                   iconSize: UIConstants.overlayCellIconSize,
                   color: UIConstants.lifeCounterTextColor,
                   style: IconButton.styleFrom(
-                    backgroundColor: UIConstants.buttonBackgroundDarkColor,
+                    backgroundColor: Colors.black54,
                   ),
                 ),
               ],
