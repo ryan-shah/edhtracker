@@ -97,9 +97,6 @@ class PlayerCardState extends State<PlayerCard> {
   /// Whether the player is currently shown as eliminated
   bool _isEliminated = false;
 
-  /// Whether the player has dismissed the elimination overlay at least once
-  bool _hasDismissedElimination = false;
-
   // Removed: bool _showTimer = false;
 
   // ============================================================================
@@ -132,7 +129,6 @@ class PlayerCardState extends State<PlayerCard> {
       _commanderDamage.clear();
       _playerCounters.clear();
       _isEliminated = false;
-      _hasDismissedElimination = false;
       _lifePaid = 0;
       _cardsMilled = 0;
       _extraTurns = 0;
@@ -349,6 +345,35 @@ class PlayerCardState extends State<PlayerCard> {
     );
   }
 
+  /// Long-press handler on the life total. Confirms with the user before
+  /// marking the player eliminated.
+  Future<void> _confirmEliminate(BuildContext context) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Eliminate ${widget.playerName}?'),
+        content: const Text(
+          'Mark this player as eliminated? Their turn will be skipped.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Eliminate'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      setState(() {
+        _isEliminated = true;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     String formatDuration(Duration duration) {
@@ -464,65 +489,46 @@ class PlayerCardState extends State<PlayerCard> {
                                   UIConstants.buttonBackgroundDarkColor,
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal:
-                                  UIConstants.lifeCounterPaddingHorizontal,
-                            ),
-                            child: Text(
-                              '$_life',
-                              style: Theme.of(context).textTheme.displayLarge
-                                  ?.copyWith(
-                                    color: UIConstants.lifeCounterTextColor,
-                                    fontWeight: FontWeight.bold,
-                                    shadows: [
-                                      Shadow(
-                                        blurRadius: UIConstants
-                                            .lifeCounterShadowBlurRadius,
-                                        color:
-                                            UIConstants.lifeCounterShadowColor,
-                                        offset: const Offset(
-                                          UIConstants.lifeCounterShadowOffsetX,
-                                          UIConstants.lifeCounterShadowOffsetY,
+                          GestureDetector(
+                            onLongPress: () => _confirmEliminate(context),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal:
+                                    UIConstants.lifeCounterPaddingHorizontal,
+                              ),
+                              child: Text(
+                                '$_life',
+                                style: Theme.of(context).textTheme.displayLarge
+                                    ?.copyWith(
+                                      color: UIConstants.lifeCounterTextColor,
+                                      fontWeight: FontWeight.bold,
+                                      shadows: [
+                                        Shadow(
+                                          blurRadius: UIConstants
+                                              .lifeCounterShadowBlurRadius,
+                                          color: UIConstants
+                                              .lifeCounterShadowColor,
+                                          offset: const Offset(
+                                            UIConstants
+                                                .lifeCounterShadowOffsetX,
+                                            UIConstants
+                                                .lifeCounterShadowOffsetY,
+                                          ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
+                                      ],
+                                    ),
+                              ),
                             ),
                           ),
-                          // Row to keep buttons together
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.add),
-                                onPressed: incrementLife,
-                                iconSize: UIConstants.lifeCounterIconSize,
-                                color: UIConstants.lifeCounterTextColor,
-                                style: IconButton.styleFrom(
-                                  backgroundColor:
-                                      UIConstants.buttonBackgroundDarkColor,
-                                ),
-                              ),
-                              // Self-eliminate button shown after dismissal
-                              if (_hasDismissedElimination && !_isEliminated)
-                                IconButton(
-                                  icon: const Icon(Icons.person_off),
-                                  onPressed: () {
-                                    setState(() {
-                                      _isEliminated = true;
-                                    });
-                                  },
-                                  iconSize:
-                                      UIConstants.lifeCounterIconSize * 0.7,
-                                  color: Colors.redAccent,
-                                  style: IconButton.styleFrom(
-                                    backgroundColor:
-                                        UIConstants.buttonBackgroundDarkColor,
-                                  ),
-                                  tooltip: 'Eliminate Player',
-                                ),
-                            ],
+                          IconButton(
+                            icon: const Icon(Icons.add),
+                            onPressed: incrementLife,
+                            iconSize: UIConstants.lifeCounterIconSize,
+                            color: UIConstants.lifeCounterTextColor,
+                            style: IconButton.styleFrom(
+                              backgroundColor:
+                                  UIConstants.buttonBackgroundDarkColor,
+                            ),
                           ),
                         ],
                       ),
@@ -613,7 +619,6 @@ class PlayerCardState extends State<PlayerCard> {
                   onTap: () {
                     setState(() {
                       _isEliminated = false;
-                      _hasDismissedElimination = true;
                     });
                   },
                   child: Container(

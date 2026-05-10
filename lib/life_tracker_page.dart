@@ -70,7 +70,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
     ]);
     _currentPlayerIndex = widget.startingPlayerIndex;
     _currentTurnStartTime = DateTime.now(); // Initialize turn start time
-    _isTimerEnabled = true; // Timer is enabled by default
+    _isTimerEnabled = false; // Timer is disabled by default; toggle via menu
 
     _gameLogger = GameLogger(
       playerNames: widget.playerNames,
@@ -390,15 +390,41 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
       // Record the state *before* advancing the turn
       _gameLogger.recordTurn(_currentPlayerIndex, _turnCount, _playerCardKeys);
 
-      // Advance to the next active player (skip inactive players for 3-player games)
-      do {
-        _currentPlayerIndex = (_currentPlayerIndex + 1) % 4;
-      } while (_currentPlayerIndex >= widget.playerCount);
+      // Advance to the next living player. Bounded by playerCount so an
+      // all-eliminated table can't infinite-loop.
+      var safety = 0;
+      while (safety < widget.playerCount) {
+        // Advance one seat, re-skipping inactive seats in 3-player games.
+        do {
+          _currentPlayerIndex = (_currentPlayerIndex + 1) % 4;
+        } while (_currentPlayerIndex >= widget.playerCount);
 
-      if (_currentPlayerIndex == widget.startingPlayerIndex) {
-        _turnCount++;
+        // Increment turn count whenever the cursor passes the starter,
+        // even when that starter is eliminated and being skipped.
+        if (_currentPlayerIndex == widget.startingPlayerIndex) {
+          _turnCount++;
+        }
+
+        final isEliminated = _playerCardKeys[_currentPlayerIndex]
+                .currentState
+                ?.isEliminated ??
+            false;
+        if (!isEliminated) {
+          break;
+        }
+
+        // Log the skipped turn before advancing past it.
+        _gameLogger.recordTurn(
+          _currentPlayerIndex,
+          _turnCount,
+          _playerCardKeys,
+          skipped: true,
+        );
+        safety++;
       }
-      // Increment cardsDrawn for the next player
+
+      // Increment cardsDrawn for the player whose turn it is now (skipped
+      // players never had it incremented).
       _playerCardKeys[_currentPlayerIndex].currentState?.incrementCardsDrawn();
 
       _currentTurnStartTime =
@@ -419,7 +445,11 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
       // Decrement cardsDrawn for the current player before restoring previous state
       _playerCardKeys[_currentPlayerIndex].currentState?.decrementCardsDrawn();
 
-      final previousTurnEntry = _gameLogger.goToPreviousTurn();
+      // Pop past any skipped entries to land on the previous real turn.
+      var previousTurnEntry = _gameLogger.goToPreviousTurn();
+      while (previousTurnEntry != null && previousTurnEntry.skipped) {
+        previousTurnEntry = _gameLogger.goToPreviousTurn();
+      }
       if (previousTurnEntry != null) {
         _currentPlayerIndex = previousTurnEntry.activePlayerIndex;
         _turnCount = previousTurnEntry.turnNumber;

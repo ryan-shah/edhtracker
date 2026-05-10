@@ -153,6 +153,7 @@ class TurnLogEntry {
   final List<PlayerStateSnapshot> playerStates;
   final DateTime turnStartTime;
   final DateTime turnEndTime;
+  final bool skipped;
 
   TurnLogEntry({
     required this.turnNumber,
@@ -160,6 +161,7 @@ class TurnLogEntry {
     required this.playerStates,
     required this.turnStartTime,
     required this.turnEndTime,
+    this.skipped = false,
   });
 
   factory TurnLogEntry.fromJson(Map<String, dynamic> json) {
@@ -171,6 +173,7 @@ class TurnLogEntry {
       ),
       turnStartTime: DateTime.parse(json['turn_start_time']),
       turnEndTime: DateTime.parse(json['turn_end_time']),
+      skipped: json['skipped'] ?? false,
     );
   }
 
@@ -181,6 +184,7 @@ class TurnLogEntry {
       'player_states': playerStates.map((e) => e.toJson()).toList(),
       'turn_start_time': turnStartTime.toIso8601String(),
       'turn_end_time': turnEndTime.toIso8601String(),
+      'skipped': skipped,
     };
   }
 }
@@ -259,11 +263,16 @@ class GameLogger {
        _lastTurnEndTime = lastTurnEndTime;
 
   /// Records the state of all players at the end of a turn.
+  ///
+  /// When [skipped] is true, the entry represents an eliminated player whose
+  /// turn was skipped: start and end times collapse to [_lastTurnEndTime] and
+  /// [_lastTurnEndTime] is NOT advanced, keeping real turns contiguous.
   void recordTurn(
     int activePlayerIndex,
     int turnNumber,
-    List<GlobalKey<PlayerCardState>> playerCardKeys,
-  ) {
+    List<GlobalKey<PlayerCardState>> playerCardKeys, {
+    bool skipped = false,
+  }) {
     final playerStates = <PlayerStateSnapshot>[];
     for (int i = 0; i < playerCardKeys.length; i++) {
       final playerCardState = playerCardKeys[i].currentState;
@@ -273,7 +282,7 @@ class GameLogger {
     }
 
     final currentTurnStartTime = _lastTurnEndTime;
-    final currentTurnEndTime = DateTime.now();
+    final currentTurnEndTime = skipped ? _lastTurnEndTime : DateTime.now();
 
     _turnLog.add(
       TurnLogEntry(
@@ -282,9 +291,12 @@ class GameLogger {
         playerStates: playerStates,
         turnStartTime: currentTurnStartTime,
         turnEndTime: currentTurnEndTime,
+        skipped: skipped,
       ),
     );
-    _lastTurnEndTime = currentTurnEndTime; // Update for the next turn
+    if (!skipped) {
+      _lastTurnEndTime = currentTurnEndTime;
+    }
   }
 
   /// Sets the end time of the game.

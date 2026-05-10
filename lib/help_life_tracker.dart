@@ -111,7 +111,27 @@ class _HelpLifeTrackerState extends State<HelpLifeTracker> {
                     ),
                     _buildSectionContent(
                       'Undoing Turns',
-                      'Long-press any player card to undo the last turn progression. This reverts the game state to the beginning of the previous turn, including all tracked values.',
+                      'Long-press the main area of any player card (anywhere except the life total) to undo the last turn progression. This reverts the game state to the beginning of the previous turn, including all tracked values. If a turn was skipped because of an eliminated player, undo will pop past the skipped entry and land on the previous real turn.',
+                    ),
+                  ]),
+                  const SizedBox(height: 24),
+                  _buildSectionTitle(context, 'Player Elimination'),
+                  _buildSection(context, [
+                    _buildSectionContent(
+                      'Automatic Elimination',
+                      'When a player\'s life total reaches 0 or they take 21 or more commander damage from a single opponent, an "ELIMINATED" overlay appears on their card.',
+                    ),
+                    _buildSectionContent(
+                      'Dismissing the Overlay',
+                      'Tap the elimination overlay to dismiss it and un-eliminate the player. This is useful when 0 life does not actually mean a loss (e.g., Phyrexian Unlife, Platinum Angel, or other replacement effects).',
+                    ),
+                    _buildSectionContent(
+                      'Manual Elimination',
+                      'Long-press the life total number itself to manually mark a player as eliminated. A confirmation dialog will appear before the player is eliminated.',
+                    ),
+                    _buildSectionContent(
+                      'Skipped Turns',
+                      'Eliminated players are automatically skipped when the turn passes. Each skipped turn is still recorded in the game log so undo and stats remain accurate, but skipped turns do not count toward turn averages or longest-turn calculations.',
                     ),
                   ]),
                   const SizedBox(height: 24),
