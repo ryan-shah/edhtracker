@@ -389,18 +389,27 @@ class PlayerCardState extends State<PlayerCard> {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Background: Commander art images
+            // Background: Commander art images. Each image fills its half
+            // (or full width for single commanders) via Stack.expand — same
+            // pattern as the commander damage overlay tiles.
             if (widget.backgroundUrls.isNotEmpty)
               Positioned.fill(
-                child: Opacity(
-                  opacity: UIConstants.backgroundImageOpacity,
-                  child: Row(
-                    children: widget.backgroundUrls.map((url) {
-                      return Expanded(
-                        child: Image.network(url, fit: BoxFit.cover),
-                      );
-                    }).toList(),
-                  ),
+                child: Row(
+                  children: widget.backgroundUrls.map((url) {
+                    return Expanded(
+                      child: ClipRect(
+                        child: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            Opacity(
+                              opacity: UIConstants.backgroundImageOpacity,
+                              child: Image.network(url, fit: BoxFit.cover),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
             // Main content column
