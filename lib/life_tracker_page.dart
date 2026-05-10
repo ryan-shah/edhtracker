@@ -561,7 +561,14 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
               // Full-screen overlay (commander damage / actions / counters)
               if (_activeOverlayPlayerIndex != null &&
                   _activeOverlayKind != null)
-                Positioned.fill(child: _buildActiveOverlay()),
+                Positioned.fill(
+                  child: isPortrait
+                      ? RotatedBox(
+                          quarterTurns: 1,
+                          child: _buildActiveOverlay(),
+                        )
+                      : _buildActiveOverlay(),
+                ),
             ],
           );
         },
