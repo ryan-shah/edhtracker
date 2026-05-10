@@ -27,22 +27,18 @@ class OverlayItem {
   });
 }
 
-/// A reusable overlay widget for displaying and managing counters.
+/// Full-screen overlay for displaying and managing a small set of counters.
 ///
-/// This widget is used throughout the app to display:
-/// - Commander damage from each player
-/// - Player counters (Energy, Experience, Poison, Rad)
-/// - Action tracking (Life Paid, Cards Milled, Extra Turns)
+/// Used by the page-level counter overlay (Energy/Experience/Poison/Rad) and
+/// the action overlay (Life Paid/Cards Milled/Extra Turns/Cards Drawn) — both
+/// of which pass exactly 4 [items]. The 2×2 layout fills the viewport so no
+/// scrolling is needed.
 ///
-/// The overlay adapts its layout based on the [isScrollable] flag:
-/// - Non-scrollable: Shrink-wraps to fit all items, no scrolling needed
-/// - Scrollable: Expands to fill available space with scrolling support
+/// Falls back to a responsive scrollable grid if [items.length] != 4 (no
+/// current callers rely on this, but the widget stays defensive).
 ///
-/// Features:
-/// - Responsive grid layout (1 or 2 columns based on available width)
-/// - Close button floating at the bottom center (or bottom right in single-column layout)
-/// - Text truncation for long labels
-/// - Responsive icon sizing based on screen width
+/// Visual language matches the life counter (see player_card.dart): big white
+/// shadowed value text, dark circular icon buttons.
 class CounterOverlay extends StatelessWidget {
   /// List of counter items to display
   final List<OverlayItem> items;
@@ -50,9 +46,8 @@ class CounterOverlay extends StatelessWidget {
   /// Callback when the close button is pressed
   final VoidCallback onClose;
 
-  /// Whether the overlay should support scrolling.
-  /// Set to true for overlays with many items (e.g., commander damage).
-  /// Set to false for overlays with few items (e.g., player counters).
+  /// Whether the fallback grid should support scrolling. Ignored by the 2×2
+  /// layout (which never needs to scroll).
   final bool isScrollable;
 
   const CounterOverlay({
@@ -68,131 +63,173 @@ class CounterOverlay extends StatelessWidget {
       color: Theme.of(
         context,
       ).cardColor.withValues(alpha: UIConstants.overlayContainerOpacity),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          // Determine number of columns based on available width
-          final crossAxisCount =
-              constraints.maxWidth > UIConstants.overlayMinCrossAxisCount
-              ? 2
-              : 1;
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(
+              bottom: UIConstants.fullScreenOverlayCloseButtonBottom * 2 + 56,
+            ),
+            child: items.length == 4
+                ? _build2x2(items)
+                : _buildFallbackGrid(items),
+          ),
+          Positioned(
+            bottom: UIConstants.fullScreenOverlayCloseButtonBottom,
+            left: 0,
+            right: 0,
+            child: Center(
+              child: FloatingActionButton(
+                onPressed: onClose,
+                backgroundColor: UIConstants.closeButtonColor,
+                child: const Icon(Icons.close),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-          final double itemWidth = constraints.maxWidth / crossAxisCount;
-
-          // Calculate item height
-          // For single column, use a more compact height to remove space between items
-          final double itemHeight = crossAxisCount == 1
-              ? UIConstants.defaultOverlayItemHeight * 0.75
-              : UIConstants.defaultOverlayItemHeight;
-
-          return Stack(
+  Widget _build2x2(List<OverlayItem> items) {
+    return Column(
+      children: [
+        Expanded(
+          child: Row(
             children: [
-              // GridView without bottom padding to allow close button to overlay
-              GridView.builder(
-                padding: EdgeInsets.zero, // Ensure it starts at the very top
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: crossAxisCount,
-                  childAspectRatio: itemWidth / itemHeight,
+              Expanded(child: _OverlayCell(item: items[0])),
+              Expanded(child: _OverlayCell(item: items[1])),
+            ],
+          ),
+        ),
+        Expanded(
+          child: Row(
+            children: [
+              Expanded(child: _OverlayCell(item: items[2])),
+              Expanded(child: _OverlayCell(item: items[3])),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFallbackGrid(List<OverlayItem> items) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount =
+            constraints.maxWidth > UIConstants.overlayMinCrossAxisCount
+            ? 2
+            : 1;
+        final double itemWidth = constraints.maxWidth / crossAxisCount;
+        final double itemHeight = crossAxisCount == 1
+            ? UIConstants.defaultOverlayItemHeight * 0.75
+            : UIConstants.defaultOverlayItemHeight;
+        return GridView.builder(
+          padding: EdgeInsets.zero,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            childAspectRatio: itemWidth / itemHeight,
+          ),
+          physics: isScrollable
+              ? const AlwaysScrollableScrollPhysics()
+              : const NeverScrollableScrollPhysics(),
+          shrinkWrap: !isScrollable,
+          itemCount: items.length,
+          itemBuilder: (context, index) => _OverlayCell(item: items[index]),
+        );
+      },
+    );
+  }
+}
+
+/// One cell in the 2×2 (or fallback grid) overlay.
+///
+/// Renders the item label, value (large white shadowed text matching the life
+/// counter), and dark circular +/- icon buttons. Cell content scales down via
+/// [FittedBox] when space is tight.
+class _OverlayCell extends StatelessWidget {
+  final OverlayItem item;
+
+  const _OverlayCell({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(UIConstants.overlayCellPadding),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return Text(
+                truncateName(
+                  item.label,
+                  availableWidth: constraints.maxWidth,
                 ),
-                // Disable scrolling for non-scrollable overlays, allow for scrollable ones
-                physics: isScrollable
-                    ? const AlwaysScrollableScrollPhysics()
-                    : const NeverScrollableScrollPhysics(),
-                // Shrink-wrap non-scrollable content to fit its size
-                shrinkWrap: !isScrollable,
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final item = items[index];
-                  return Column(
-                    mainAxisAlignment: crossAxisCount == 1
-                        ? MainAxisAlignment.start
-                        : MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 4.0),
-                      // Item label with text truncation for long names
-                      Text(
-                        truncateName(
-                          item.label,
-                          availableWidth:
-                              itemWidth -
-                              UIConstants.overlayItemTextAvailableWidthOffset,
-                        ),
-                        style: Theme.of(context).textTheme.bodySmall,
-                        textAlign: TextAlign.center,
-                      ),
-                      // Space between label and buttons
-                      SizedBox(
-                        height: UIConstants
-                            .overlayItemPaddingBetweenLabelAndButtons,
-                      ),
-                      // Row with decrement button, value, and increment button
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.remove),
-                            // Responsive icon size based on width
-                            iconSize:
-                                constraints.maxWidth >
-                                    UIConstants.largeIconSizeThreshold
-                                ? UIConstants.largeIconSize
-                                : UIConstants.smallIconSize,
-                            onPressed: item.onDecrement,
-                            visualDensity: crossAxisCount == 1
-                                ? VisualDensity.compact
-                                : VisualDensity.standard,
-                          ),
-                          // Current counter value
-                          Text(
-                            '${item.value}',
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.add),
-                            // Responsive icon size based on width
-                            iconSize:
-                                constraints.maxWidth >
-                                    UIConstants.largeIconSizeThreshold
-                                ? UIConstants.largeIconSize
-                                : UIConstants.smallIconSize,
-                            onPressed: item.onIncrement,
-                            visualDensity: crossAxisCount == 1
-                                ? VisualDensity.compact
-                                : VisualDensity.standard,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: UIConstants.lifeCounterTextColor,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              );
+            },
+          ),
+          const SizedBox(
+            height: UIConstants.overlayItemPaddingBetweenLabelAndButtons,
+          ),
+          Expanded(
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.remove),
+                  onPressed: item.onDecrement,
+                  iconSize: UIConstants.overlayCellIconSize,
+                  color: UIConstants.lifeCounterTextColor,
+                  style: IconButton.styleFrom(
+                    backgroundColor: UIConstants.buttonBackgroundDarkColor,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: UIConstants.lifeCounterPaddingHorizontal,
+                  ),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      '${item.value}',
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        color: UIConstants.lifeCounterTextColor,
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(
+                            blurRadius:
+                                UIConstants.lifeCounterShadowBlurRadius,
+                            color: UIConstants.lifeCounterShadowColor,
+                            offset: const Offset(
+                              UIConstants.lifeCounterShadowOffsetX,
+                              UIConstants.lifeCounterShadowOffsetY,
+                            ),
                           ),
                         ],
                       ),
-                      if (crossAxisCount > 1) const SizedBox(height: 4.0),
-                    ],
-                  );
-                },
-              ),
-              // Close button floating
-              // Moves to bottom right if screen is small (single column), otherwise bottom center
-              Positioned(
-                bottom: UIConstants.overlayButtonBottom,
-                left: crossAxisCount == 1 ? null : 0,
-                right: crossAxisCount == 1
-                    ? UIConstants.overlayButtonBottom
-                    : 0,
-                child: crossAxisCount == 1
-                    ? FloatingActionButton(
-                        onPressed: onClose,
-                        backgroundColor: UIConstants.closeButtonColor,
-                        mini: true,
-                        child: const Icon(Icons.close),
-                      )
-                    : Center(
-                        child: FloatingActionButton(
-                          onPressed: onClose,
-                          backgroundColor: UIConstants.closeButtonColor,
-                          mini: true,
-                          child: const Icon(Icons.close),
-                        ),
-                      ),
-              ),
-            ],
-          );
-        },
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: item.onIncrement,
+                  iconSize: UIConstants.overlayCellIconSize,
+                  color: UIConstants.lifeCounterTextColor,
+                  style: IconButton.styleFrom(
+                    backgroundColor: UIConstants.buttonBackgroundDarkColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
