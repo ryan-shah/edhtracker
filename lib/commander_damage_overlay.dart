@@ -282,10 +282,19 @@ class _CommanderTile extends StatelessWidget {
                   behavior: HitTestBehavior.opaque,
                   onTap: onDecrement,
                   child: Center(
-                    child: Icon(
-                      Icons.remove,
-                      size: UIConstants.largeIconSize,
-                      color: Colors.white.withValues(alpha: 0.35),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: UIConstants.overlayButtonBackgroundColor,
+                        shape: BoxShape.circle,
+                      ),
+                      padding: const EdgeInsets.all(
+                        UIConstants.overlayIconButtonPadding,
+                      ),
+                      child: Icon(
+                        Icons.remove,
+                        size: UIConstants.largeIconSize,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
@@ -295,10 +304,19 @@ class _CommanderTile extends StatelessWidget {
                   behavior: HitTestBehavior.opaque,
                   onTap: onIncrement,
                   child: Center(
-                    child: Icon(
-                      Icons.add,
-                      size: UIConstants.largeIconSize,
-                      color: Colors.white.withValues(alpha: 0.35),
+                    child: Container(
+                      decoration: const BoxDecoration(
+                        color: UIConstants.overlayButtonBackgroundColor,
+                        shape: BoxShape.circle,
+                      ),
+                      padding: const EdgeInsets.all(
+                        UIConstants.overlayIconButtonPadding,
+                      ),
+                      child: Icon(
+                        Icons.add,
+                        size: UIConstants.largeIconSize,
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
