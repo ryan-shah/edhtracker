@@ -166,4 +166,10 @@ class UIConstants {
   
   /// Dark background color for icon buttons
   static const Color buttonBackgroundDarkColor = Colors.black26;
+
+  /// Background color for circular icon buttons in overlays
+  static const Color overlayButtonBackgroundColor = Colors.black54;
+
+  /// Padding inside circular icon button containers in overlays
+  static const double overlayIconButtonPadding = 12.0;
 }

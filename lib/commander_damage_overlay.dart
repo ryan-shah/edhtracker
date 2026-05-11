@@ -283,11 +283,13 @@ class _CommanderTile extends StatelessWidget {
                   onTap: onDecrement,
                   child: Center(
                     child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
+                      decoration: const BoxDecoration(
+                        color: UIConstants.overlayButtonBackgroundColor,
                         shape: BoxShape.circle,
                       ),
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(
+                        UIConstants.overlayIconButtonPadding,
+                      ),
                       child: Icon(
                         Icons.remove,
                         size: UIConstants.largeIconSize,
@@ -303,11 +305,13 @@ class _CommanderTile extends StatelessWidget {
                   onTap: onIncrement,
                   child: Center(
                     child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
+                      decoration: const BoxDecoration(
+                        color: UIConstants.overlayButtonBackgroundColor,
                         shape: BoxShape.circle,
                       ),
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(
+                        UIConstants.overlayIconButtonPadding,
+                      ),
                       child: Icon(
                         Icons.add,
                         size: UIConstants.largeIconSize,
