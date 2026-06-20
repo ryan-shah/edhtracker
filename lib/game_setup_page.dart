@@ -18,6 +18,7 @@ class GameSetupPage extends StatefulWidget {
   final List<bool>? initialHasPartner;
   final bool? initialUnconventionalCommanders;
   final int? initialPlayerCount;
+  final int? initialStartingLife;
 
   const GameSetupPage({
     super.key,
@@ -26,6 +27,7 @@ class GameSetupPage extends StatefulWidget {
     this.initialHasPartner,
     this.initialUnconventionalCommanders,
     this.initialPlayerCount,
+    this.initialStartingLife,
   });
 
   @override
@@ -54,19 +56,25 @@ class _GameSetupPageState extends State<GameSetupPage>
       DeviceOrientation.portraitDown,
     ]);
 
-    // Initialize with provided data if available
+    // Initialize with provided data if available. The restore lists are sized
+    // to the previous game's player count, which may be fewer than 4, so copy
+    // only what was provided and leave the remaining rows empty.
     if (widget.initialPlayerNames != null &&
         widget.initialPartnerNames != null &&
-        widget.initialHasPartner != null &&
-        widget.initialPlayerNames!.length == 4) {
-      for (int i = 0; i < 4; i++) {
+        widget.initialHasPartner != null) {
+      final initialCount = widget.initialPlayerNames!.length;
+      for (int i = 0; i < initialCount && i < 4; i++) {
         _playerNames[i].text = widget.initialPlayerNames![i];
         _partnerNames[i].text = widget.initialPartnerNames![i];
         _hasPartner[i] = widget.initialHasPartner![i];
       }
       _unconventionalCommanders =
           widget.initialUnconventionalCommanders ?? false;
-      _playerCount = widget.initialPlayerCount ?? 4;
+      _playerCount = widget.initialPlayerCount ?? initialCount;
+    }
+
+    if (widget.initialStartingLife != null) {
+      _startingLife = widget.initialStartingLife!;
     }
 
     for (var controller in _playerNames) {

@@ -147,4 +147,111 @@ void main() {
       expect(find.byType(GameSetupPage), findsOneWidget);
     });
   });
+
+  // Pumps a GameSetupPage seeded with the "New Game with Same Players"
+  // restore values. Mirrors what LifeTrackerPage / GameSummaryPage pass back.
+  Future<void> pumpRestored(
+    WidgetTester tester, {
+    List<String>? initialPlayerNames,
+    List<String>? initialPartnerNames,
+    List<bool>? initialHasPartner,
+    bool? initialUnconventionalCommanders,
+    int? initialPlayerCount,
+    int? initialStartingLife,
+  }) async {
+    await tester.binding.setSurfaceSize(const Size(600, 1400));
+    await tester.pumpWidget(MaterialApp(
+      home: GameSetupPage(
+        initialPlayerNames: initialPlayerNames,
+        initialPartnerNames: initialPartnerNames,
+        initialHasPartner: initialHasPartner,
+        initialUnconventionalCommanders: initialUnconventionalCommanders,
+        initialPlayerCount: initialPlayerCount,
+        initialStartingLife: initialStartingLife,
+      ),
+    ));
+    await tester.pump();
+  }
+
+  group('GameSetupPage restore (New Game with Same Players)', () {
+    testWidgets('restores players and count for a 3-player game', (tester) async {
+      await pumpRestored(
+        tester,
+        initialPlayerNames: const ['Krenko, Mob Boss', 'Atraxa', 'Yuriko'],
+        initialPartnerNames: const ['', '', ''],
+        initialHasPartner: const [false, false, false],
+        initialPlayerCount: 3,
+      );
+
+      // Player count restored to 3: rows 1-3 present, row 4 hidden.
+      expect(find.text('3 Players'), findsOneWidget);
+      expect(find.text('Player 1 Commander'), findsOneWidget);
+      expect(find.text('Player 3 Commander'), findsOneWidget);
+      expect(find.text('Player 4 Commander'), findsNothing);
+
+      // Commander names pre-filled into their fields.
+      expect(find.text('Krenko, Mob Boss'), findsOneWidget);
+      expect(find.text('Atraxa'), findsOneWidget);
+      expect(find.text('Yuriko'), findsOneWidget);
+    });
+
+    testWidgets('restores players for a 2-player game', (tester) async {
+      await pumpRestored(
+        tester,
+        initialPlayerNames: const ['Krenko, Mob Boss', 'Atraxa'],
+        initialPartnerNames: const ['', ''],
+        initialHasPartner: const [false, false],
+        initialPlayerCount: 2,
+      );
+
+      expect(find.text('2 Players'), findsOneWidget);
+      expect(find.text('Player 2 Commander'), findsOneWidget);
+      expect(find.text('Player 3 Commander'), findsNothing);
+      expect(find.text('Krenko, Mob Boss'), findsOneWidget);
+      expect(find.text('Atraxa'), findsOneWidget);
+    });
+
+    testWidgets('restores the starting life total', (tester) async {
+      await pumpRestored(
+        tester,
+        initialPlayerNames: const ['Atraxa', '', '', ''],
+        initialPartnerNames: const ['', '', '', ''],
+        initialHasPartner: const [false, false, false, false],
+        initialPlayerCount: 4,
+        initialStartingLife: 30,
+      );
+
+      // Restored value shown, not the default 40.
+      expect(find.text('30'), findsOneWidget);
+      expect(find.text('40'), findsNothing);
+    });
+
+    testWidgets('restores a partner commander pairing', (tester) async {
+      await pumpRestored(
+        tester,
+        initialPlayerNames: const ['Tymna', 'Atraxa'],
+        initialPartnerNames: const ['Thrasios', ''],
+        initialHasPartner: const [true, false],
+        initialPlayerCount: 2,
+      );
+
+      expect(find.text('Partner Commander'), findsOneWidget);
+      expect(find.text('Tymna'), findsOneWidget);
+      expect(find.text('Thrasios'), findsOneWidget);
+    });
+
+    testWidgets('restores the unconventional commanders toggle', (tester) async {
+      await pumpRestored(
+        tester,
+        initialPlayerNames: const ['Atraxa', 'Yuriko'],
+        initialPartnerNames: const ['', ''],
+        initialHasPartner: const [false, false],
+        initialUnconventionalCommanders: true,
+        initialPlayerCount: 2,
+      );
+
+      final switchTile = find.byType(SwitchListTile);
+      expect((tester.widget<SwitchListTile>(switchTile)).value, isTrue);
+    });
+  });
 }

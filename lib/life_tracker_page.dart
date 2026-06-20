@@ -171,6 +171,7 @@ class _LifeTrackerPageState extends State<LifeTrackerPage> {
                       initialUnconventionalCommanders:
                           widget.unconventionalCommanders,
                       initialPlayerCount: widget.playerCount,
+                      initialStartingLife: widget.startingLife,
                     ),
                   ),
                   (route) => false,
