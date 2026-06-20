@@ -1,7 +1,0 @@
-{
-  "database": "dolt",
-  "backend": "dolt",
-  "dolt_mode": "embedded",
-  "dolt_database": "edhtracker",
-  "project_id": "2733d3ae-d88f-43e7-ba06-76c55544374b"
-}
