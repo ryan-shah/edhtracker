@@ -783,6 +783,8 @@ class _GameSummaryPageState extends State<GameSummaryPage> {
                       initialHasPartner: initialHasPartner,
                       initialUnconventionalCommanders:
                           session.unconventionalCommanders,
+                      initialPlayerCount: session.playerCount,
+                      initialStartingLife: session.startingLife,
                     ),
                   ),
                   (route) => false,
